@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>hummer-core</artifactId>
+    <artifactId>hummer-client</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -17,15 +17,14 @@
     </properties>
 
     <dependencies>
-        <!-- logback -->
+        <!-- hummer -->
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
+            <groupId>com.sciatta.hummer</groupId>
+            <artifactId>hummer-core</artifactId>
         </dependency>
-        <!-- junit -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>com.sciatta.hummer</groupId>
+            <artifactId>hummer-rpc</artifactId>
         </dependency>
     </dependencies>
 

@@ -7,6 +7,7 @@ option java_outer_classname = "NameNodeRpcProto";
 service NameNodeService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  rpc Mkdir(MkdirRequest) returns (MkdirResponse);
 }
 
 // Register
@@ -24,5 +25,13 @@ message HeartbeatRequest{
   string hostname = 2;
 }
 message HeartbeatResponse{
+  int32 status = 1;
+}
+
+// Mkdir
+message MkdirRequest{
+  string path = 1;
+}
+message MkdirResponse{
   int32 status = 1;
 }

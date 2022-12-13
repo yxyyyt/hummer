@@ -32,7 +32,9 @@ public class NameNodeService extends NameNodeServiceGrpc.NameNodeServiceImplBase
     public void register(RegisterRequest request, StreamObserver<RegisterResponse> responseObserver) {
         dataNodeManager.register(request.getIp(), request.getHostname());       // TODO 重构 请求处理分发器
 
-        RegisterResponse response = RegisterResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+        RegisterResponse response = RegisterResponse.newBuilder()
+                .setStatus(STATUS_SUCCESS)
+                .build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -42,7 +44,21 @@ public class NameNodeService extends NameNodeServiceGrpc.NameNodeServiceImplBase
     public void heartbeat(HeartbeatRequest request, StreamObserver<HeartbeatResponse> responseObserver) {
         dataNodeManager.heartbeat(request.getIp(), request.getHostname());
 
-        HeartbeatResponse response = HeartbeatResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+        HeartbeatResponse response = HeartbeatResponse.newBuilder()
+                .setStatus(STATUS_SUCCESS)
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void mkdir(MkdirRequest request, StreamObserver<MkdirResponse> responseObserver) {
+        fsNameSystem.mkdir(request.getPath());
+
+        MkdirResponse response = MkdirResponse.newBuilder()
+                .setStatus(STATUS_SUCCESS)
+                .build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

@@ -163,6 +163,14 @@ public class FSEditLog {
             this.txId = txId;
             this.content = content;
         }
+
+        @Override
+        public String toString() {
+            return "EditLog{" +
+                    "txId=" + txId +
+                    ", content='" + content + '\'' +
+                    '}';
+        }
     }
 
     /**

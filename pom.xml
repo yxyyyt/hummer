@@ -13,6 +13,7 @@
         <module>hummer-namenode</module>
         <module>hummer-datanode</module>
         <module>hummer-rpc</module>
+        <module>hummer-client</module>
     </modules>
 
     <properties>

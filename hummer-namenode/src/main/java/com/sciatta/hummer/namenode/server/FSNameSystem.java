@@ -1,11 +1,16 @@
 package com.sciatta.hummer.namenode.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Created by Rain on 2022/12/13<br>
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
  * 管理元数据
  */
 public class FSNameSystem {
+    private static final Logger logger = LoggerFactory.getLogger(FSNameSystem.class);
+
     /**
      * 管理内存中的文件目录树
      */

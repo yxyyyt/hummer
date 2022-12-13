@@ -7,7 +7,7 @@ package com.sciatta.hummer.datanode.server;
  */
 public class DataNodeConfig {
     /**
-     * 主元数据节点RPC地址
+     * 主元数据节点RPC主机
      */
     public static final String ACTIVE_NAME_NODE_RPC_HOST = "localhost";
 

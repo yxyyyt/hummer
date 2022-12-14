@@ -65,7 +65,6 @@ public class FSEditLog {
                     wait(1000);
                 } catch (InterruptedException e) {
                     logger.error("{} exception while waiting for scheduling buffer", e.getMessage());
-                    return;
                 }
             }
 
@@ -78,8 +77,7 @@ public class FSEditLog {
             try {
                 doubleBuffer.write(log);   // 写入双缓存
             } catch (IOException e) {
-                logger.error("{} exception need to shutdown and exit system while write editLog buffer", e.getMessage());
-                throw new HummerException("%s exception need to shutdown and exit system while write editLog buffer", e.getMessage());
+                logger.error("{} exception while write editLog buffer", e.getMessage());
             }
 
             if (!doubleBuffer.shouldSyncToDisk()) {
@@ -97,7 +95,7 @@ public class FSEditLog {
      */
     private void logSync() {
 
-        long myTxId = localTxId.get();
+        long myTxId = localTxId.get();  // 当前线程的事务标识
 
         // 交换缓冲区
         synchronized (this) {
@@ -112,6 +110,7 @@ public class FSEditLog {
                 }
             }
 
+            // TODO 逻辑检查
             // 当有非写入线程进入此处时，myTxId是0，如shutdown回调线程运行到此处时
             // 1、有一个线程正在同步，则直接返回即可，不需要同步
             // 2、有一个线程正在同步，有一个线程正在等待同步，不需要同步

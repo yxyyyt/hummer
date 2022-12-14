@@ -56,4 +56,13 @@ public class FileSystemTests {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void testShutdown() {
+        FileSystem fileSystem = new FileSystemImpl();
+
+        int result = fileSystem.shutdown(); // 发起元数据节点发起停机请求
+
+        assertEquals(1, result);
+    }
 }

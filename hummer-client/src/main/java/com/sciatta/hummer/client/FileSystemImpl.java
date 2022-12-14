@@ -1,8 +1,6 @@
 package com.sciatta.hummer.client;
 
-import com.sciatta.hummer.rpc.MkdirRequest;
-import com.sciatta.hummer.rpc.MkdirResponse;
-import com.sciatta.hummer.rpc.NameNodeServiceGrpc;
+import com.sciatta.hummer.rpc.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
@@ -32,12 +30,22 @@ public class FileSystemImpl implements FileSystem {
 
     @Override
     public int mkdir(String path) {
-        MkdirRequest request = MkdirRequest.newBuilder()
-                .setPath(path)
-                .build();
+        MkdirRequest request = MkdirRequest.newBuilder().setPath(path).build();
 
         MkdirResponse response = nameNodeServiceGrpc.mkdir(request);
+
         logger.debug("mkdir response status is " + response.getStatus());
+
+        return response.getStatus();
+    }
+
+    @Override
+    public int shutdown() {
+        ShutdownRequest request = ShutdownRequest.newBuilder().setCode(1).build();
+
+        ShutdownResponse response = nameNodeServiceGrpc.shutdown(request);
+
+        logger.debug("shutdown response status is " + response.getStatus());
 
         return response.getStatus();
     }

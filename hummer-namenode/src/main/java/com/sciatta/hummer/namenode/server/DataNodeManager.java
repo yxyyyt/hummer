@@ -23,7 +23,10 @@ public class DataNodeManager {
     private final Map<String, DataNodeInfo> dataNodeCache = new ConcurrentHashMap<String, DataNodeInfo>();
 
     public DataNodeManager() {
-        new DataNodeAliveMonitor().start(); // 启动数据节点存活状态检查监控线程
+        // 启动数据节点存活状态检查监控线程
+        DataNodeAliveMonitor dataNodeAliveMonitor = new DataNodeAliveMonitor();
+        dataNodeAliveMonitor.setDaemon(true);
+        dataNodeAliveMonitor.start();
     }
 
     /**
@@ -33,7 +36,7 @@ public class DataNodeManager {
      * @param hostname 主机名
      * @return 是否注册成功；true，注册成功；否则，注册失败
      */
-    public Boolean register(String ip, String hostname) {
+    public boolean register(String ip, String hostname) {
         DataNodeInfo datanode = new DataNodeInfo(ip, hostname);
         dataNodeCache.put(ip + "-" + hostname, datanode);   // TODO 数据节点唯一规则
         logger.debug("data node {}:{} register success", ip, hostname);
@@ -47,7 +50,7 @@ public class DataNodeManager {
      * @param hostname 主机名
      * @return 是否心跳成功；true，心跳成功；否则，心跳失败
      */
-    public Boolean heartbeat(String ip, String hostname) {
+    public boolean heartbeat(String ip, String hostname) {
         DataNodeInfo datanode = dataNodeCache.get(ip + "-" + hostname);
         datanode.setLatestHeartbeatTime(System.currentTimeMillis());
         logger.debug("data node {}:{} heartbeat success", ip, hostname);

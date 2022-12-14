@@ -13,4 +13,11 @@ public interface FileSystem {
      * @return 创建目录响应
      */
     int mkdir(String path);
+
+    /**
+     * 优雅停机
+     *
+     * @return 停机是否成功
+     */
+    int shutdown();
 }

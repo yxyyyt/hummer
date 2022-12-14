@@ -124,6 +124,11 @@ public class DoubleBuffer {
          * @throws IOException IO异常
          */
         public void flush() throws IOException {
+            if (lastFlushedTxId == latestWriteTxId) {
+                logger.debug("no editLog to flush");
+                return;
+            }
+
             Path editsLogFile = NameNodeConfig.getEditsLogFile(++lastFlushedTxId, latestWriteTxId);
             logger.debug("sync disk path is " + editsLogFile.toFile().getPath());
 

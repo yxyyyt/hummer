@@ -14,12 +14,12 @@ public class FSNameSystem {
     /**
      * 管理内存中的文件目录树
      */
-    private FSDirectory fsDirectory;
+    private final FSDirectory fsDirectory;
 
     /**
      * 管理事务日志
      */
-    private FSEditLog fsEditLog;
+    private final FSEditLog fsEditLog;
 
     public FSNameSystem() {
         this.fsDirectory = new FSDirectory();
@@ -36,5 +36,12 @@ public class FSNameSystem {
         this.fsDirectory.mkdir(path);
         this.fsEditLog.logEdit("{'OP':'MKDIR','PATH':'" + path + "'}");
         return true;
+    }
+
+    /**
+     * 停止运行
+     */
+    public void shutdown() {
+        this.fsEditLog.forceSync();
     }
 }

@@ -44,8 +44,13 @@ public class FSEditLog {
     /**
      * 线程本地事务标识
      */
-    private final ThreadLocal<Long> localTxId = new ThreadLocal<>();
+    private final ThreadLocal<Long> localTxId = ThreadLocal.withInitial(() -> 0L);
 
+    /**
+     * 写入事务日志
+     *
+     * @param content 事务日志
+     */
     public void logEdit(String content) {
         synchronized (this) {
             // 当前缓存已经写满，正在切换空闲缓存，当前线程等待切换完成
@@ -56,6 +61,11 @@ public class FSEditLog {
                 } catch (InterruptedException e) {
                     logger.error("{} exception while waiting for scheduling buffer", e.getMessage());
                 }
+            }
+
+            if (NameNodeRpcServer.SHUTDOWN.get()) {
+                logger.debug("server have been shut down, then nothing to do");
+                return;
             }
 
             // 多线程同步顺序写入双缓存，保证txId顺序单调递增
@@ -81,6 +91,14 @@ public class FSEditLog {
     }
 
     /**
+     * 强制刷盘
+     */
+    public void forceSync() {
+        logger.debug("force sync");
+        logSync();
+    }
+
+    /**
      * 同步事务日志
      */
     private void logSync() {
@@ -101,13 +119,17 @@ public class FSEditLog {
             }
 
             // TODO 逻辑检查
-            // 当有非写入线程进入此处时，myTxId是0，如shutdown回调线程运行到此处时
+            // 当有非写入线程进入此处时，如果没有参与写入事务日志，则myTxId是0；若之前参与过写入事务日志，则myTxId小于syncTxId
+            // 当shutdown回调线程运行到此处时：
             // 1、有一个线程正在同步，则直接返回即可，不需要同步
             // 2、有一个线程正在同步，有一个线程正在等待同步，不需要同步
             // 3、没有任何线程在同步，当前线程负责把缓存区剩余未同步的事务日志同步刷盘
             if (myTxId <= syncTxId && isSyncRunning) {
                 logger.warn("myTxId[{}] <= syncTxId[{}], exist sync thread, return now", myTxId, syncTxId);
                 return;
+            } else if (myTxId <= syncTxId) {
+                logger.warn("myTxId[{}] <= syncTxId[{}], not exist sync thread, need to sync remaining editLog",
+                        myTxId, syncTxId);
             }
 
             doubleBuffer.setReadyToSync();

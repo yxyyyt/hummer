@@ -16,25 +16,42 @@ public class NameNodeService extends NameNodeServiceGrpc.NameNodeServiceImplBase
     /**
      * 管理元数据
      */
-    private FSNameSystem fsNameSystem;
+    private final FSNameSystem fsNameSystem;
 
     /**
      * 负管理集群中的所有数据节点
      */
-    private DataNodeManager dataNodeManager;
+    private final DataNodeManager dataNodeManager;
 
-    public NameNodeService(FSNameSystem fsNameSystem, DataNodeManager dataNodeManager) {
+    /**
+     * 元数据节点RPC服务端
+     */
+    private final NameNodeRpcServer nameNodeRpcServer;
+
+    public NameNodeService(FSNameSystem fsNameSystem, DataNodeManager dataNodeManager, NameNodeRpcServer nameNodeRpcServer) {
         this.fsNameSystem = fsNameSystem;
         this.dataNodeManager = dataNodeManager;
+        this.nameNodeRpcServer = nameNodeRpcServer;
     }
 
-    @Override
+    @Override   // TODO 重构 请求处理分发器
     public void register(RegisterRequest request, StreamObserver<RegisterResponse> responseObserver) {
-        dataNodeManager.register(request.getIp(), request.getHostname());       // TODO 重构 请求处理分发器
+        RegisterResponse response;
 
-        RegisterResponse response = RegisterResponse.newBuilder()
-                .setStatus(STATUS_SUCCESS)
-                .build();
+        if (NameNodeRpcServer.SHUTDOWN.get()) {
+            response = RegisterResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        boolean test = dataNodeManager.register(request.getIp(), request.getHostname());
+
+        if (test) {
+            response = RegisterResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+        } else {
+            response = RegisterResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+        }
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -42,11 +59,22 @@ public class NameNodeService extends NameNodeServiceGrpc.NameNodeServiceImplBase
 
     @Override
     public void heartbeat(HeartbeatRequest request, StreamObserver<HeartbeatResponse> responseObserver) {
-        dataNodeManager.heartbeat(request.getIp(), request.getHostname());
+        HeartbeatResponse response;
 
-        HeartbeatResponse response = HeartbeatResponse.newBuilder()
-                .setStatus(STATUS_SUCCESS)
-                .build();
+        if (NameNodeRpcServer.SHUTDOWN.get()) {
+            response = HeartbeatResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        boolean test = dataNodeManager.heartbeat(request.getIp(), request.getHostname());
+
+        if (test) {
+            response = HeartbeatResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+        } else {
+            response = HeartbeatResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+        }
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -54,11 +82,41 @@ public class NameNodeService extends NameNodeServiceGrpc.NameNodeServiceImplBase
 
     @Override
     public void mkdir(MkdirRequest request, StreamObserver<MkdirResponse> responseObserver) {
-        fsNameSystem.mkdir(request.getPath());
+        MkdirResponse response;
 
-        MkdirResponse response = MkdirResponse.newBuilder()
-                .setStatus(STATUS_SUCCESS)
-                .build();
+        if (NameNodeRpcServer.SHUTDOWN.get()) {
+            response = MkdirResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        boolean test = fsNameSystem.mkdir(request.getPath());
+
+        if (test) {
+            response = MkdirResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+        } else {
+            response = MkdirResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+        }
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void shutdown(ShutdownRequest request, StreamObserver<ShutdownResponse> responseObserver) {
+        ShutdownResponse response;
+
+        if (NameNodeRpcServer.SHUTDOWN.get()) {
+            response = ShutdownResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        nameNodeRpcServer.shutdown();
+
+        response = ShutdownResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

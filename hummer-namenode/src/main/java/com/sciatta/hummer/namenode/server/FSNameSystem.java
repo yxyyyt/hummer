@@ -34,7 +34,7 @@ public class FSNameSystem {
      */
     public boolean mkdir(String path) {
         this.fsDirectory.mkdir(path);
-        this.fsEditLog.logEdit("创建了一个目录：" + path);
+        this.fsEditLog.logEdit("{'OP':'MKDIR','PATH':'" + path + "'}");
         return true;
     }
 }

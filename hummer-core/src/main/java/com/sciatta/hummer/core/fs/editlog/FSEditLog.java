@@ -1,12 +1,11 @@
-package com.sciatta.hummer.namenode.server;
+package com.sciatta.hummer.core.fs.editlog;
 
 import com.sciatta.hummer.core.exception.HummerException;
+import com.sciatta.hummer.core.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-
-import static com.sciatta.hummer.namenode.server.NameNodeConfig.EDITS_LOG_BUFFER_LIMIT;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -29,7 +28,7 @@ public class FSEditLog {
     /**
      * 双缓存
      */
-    private final DoubleBuffer doubleBuffer = new DoubleBuffer();
+    private final DoubleBuffer doubleBuffer;
 
     /**
      * 当前是否正在刷写磁盘
@@ -45,6 +44,19 @@ public class FSEditLog {
      * 线程本地事务标识
      */
     private final ThreadLocal<Long> localTxId = ThreadLocal.withInitial(() -> 0L);
+
+    /**
+     * 磁盘同步最大内存缓存大小，单位：字节
+     */
+    private final int editsLogBufferLimit;
+
+    private final Server server;
+
+    public FSEditLog(Server server, int editsLogBufferLimit, String editsLogPath) {
+        this.editsLogBufferLimit = editsLogBufferLimit;
+        this.doubleBuffer = new DoubleBuffer(editsLogBufferLimit, editsLogPath);
+        this.server = server;
+    }
 
     /**
      * 写入事务日志
@@ -63,8 +75,8 @@ public class FSEditLog {
                 }
             }
 
-            if (NameNodeRpcServer.SHUTDOWN.get()) {
-                logger.debug("server have been shut down, then nothing to do");
+            if (server.isClosing()) {
+                logger.debug("server have been closed, then nothing to do");
                 return;
             }
 
@@ -111,7 +123,7 @@ public class FSEditLog {
             // 如果频繁等待同步缓存，说明写入缓存速度远大于刷写磁盘速度，此时需要提高双缓存大小
             while (myTxId > syncTxId && isSyncRunning) {
                 try {
-                    logger.debug("waiting for sync finish, may be need to increase double buffer size [{}]!", EDITS_LOG_BUFFER_LIMIT);
+                    logger.debug("waiting for sync finish, may be need to increase double buffer size [{}]!", editsLogBufferLimit);
                     wait(1000);
                 } catch (InterruptedException e) {
                     logger.error("{} exception while waiting for sync", e.getMessage());

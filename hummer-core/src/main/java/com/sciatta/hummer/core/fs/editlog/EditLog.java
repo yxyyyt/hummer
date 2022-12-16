@@ -1,4 +1,4 @@
-package com.sciatta.hummer.namenode.server;
+package com.sciatta.hummer.core.fs.editlog;
 
 /**
  * Created by Rain on 2022/12/14<br>

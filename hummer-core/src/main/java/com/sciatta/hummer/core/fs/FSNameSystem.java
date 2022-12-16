@@ -1,7 +1,8 @@
-package com.sciatta.hummer.namenode.server;
+package com.sciatta.hummer.core.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.sciatta.hummer.core.fs.directory.FSDirectory;
+import com.sciatta.hummer.core.fs.editlog.FSEditLog;
+import com.sciatta.hummer.core.server.Server;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -9,21 +10,12 @@ import org.slf4j.LoggerFactory;
  * 管理元数据
  */
 public class FSNameSystem {
-    private static final Logger logger = LoggerFactory.getLogger(FSNameSystem.class);
-
-    /**
-     * 管理内存中的文件目录树
-     */
     private final FSDirectory fsDirectory;
-
-    /**
-     * 管理事务日志
-     */
     private final FSEditLog fsEditLog;
 
-    public FSNameSystem() {
+    public FSNameSystem(Server server, int editsLogBufferLimit, String editsLogPath) {
         this.fsDirectory = new FSDirectory();
-        this.fsEditLog = new FSEditLog();
+        this.fsEditLog = new FSEditLog(server, editsLogBufferLimit, editsLogPath);
     }
 
     /**
@@ -39,9 +31,9 @@ public class FSNameSystem {
     }
 
     /**
-     * 停止运行
+     * 持久化元数据
      */
-    public void shutdown() {
+    public void persist() {
         this.fsEditLog.forceSync();
     }
 }

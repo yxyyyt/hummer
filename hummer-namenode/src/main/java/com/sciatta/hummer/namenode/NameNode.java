@@ -1,4 +1,6 @@
-package com.sciatta.hummer.namenode.server;
+package com.sciatta.hummer.namenode;
+
+import com.sciatta.hummer.namenode.server.NameNodeServer;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -7,8 +9,6 @@ package com.sciatta.hummer.namenode.server;
  */
 public class NameNode {
     public static void main(String[] args) throws Exception {
-        NameNodeRpcServer nameNodeRpcServer = new NameNodeRpcServer();
-        nameNodeRpcServer.start();
-        nameNodeRpcServer.keep();
+        new NameNodeServer().start().keep();
     }
 }

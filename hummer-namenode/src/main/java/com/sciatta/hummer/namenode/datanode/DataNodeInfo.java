@@ -1,4 +1,4 @@
-package com.sciatta.hummer.namenode.server;
+package com.sciatta.hummer.namenode.datanode;
 
 /**
  * Created by Rain on 2022/12/13<br>

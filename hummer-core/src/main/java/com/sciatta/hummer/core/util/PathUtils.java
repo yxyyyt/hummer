@@ -41,4 +41,18 @@ public class PathUtils {
         int start = path.lastIndexOf(File.separator);
         return path.substring(start + 1);
     }
+
+    /**
+     * 获取事务日志文件存储路径
+     *
+     * @param editsLogPath   事务日志持久化路径
+     * @param flushedMinTxId 刷写磁盘最小事务标识
+     * @param flushedMaxTxId 刷写磁盘最大事务标识
+     * @return 事务日志文件存储路径
+     * @throws IOException IO异常
+     */
+    public static Path getEditsLogFile(String editsLogPath, long flushedMinTxId, long flushedMaxTxId) throws IOException {
+        String file = editsLogPath + "edits-" + flushedMinTxId + "-" + flushedMaxTxId + ".log";
+        return PathUtils.getPathAndCreateDirectoryIfNotExists(file);
+    }
 }

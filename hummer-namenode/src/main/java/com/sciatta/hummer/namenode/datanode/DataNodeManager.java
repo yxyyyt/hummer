@@ -1,5 +1,6 @@
-package com.sciatta.hummer.namenode.server;
+package com.sciatta.hummer.namenode.datanode;
 
+import com.sciatta.hummer.core.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,13 +21,20 @@ public class DataNodeManager {
     /**
      * 数据节点缓存
      */
-    private final Map<String, DataNodeInfo> dataNodeCache = new ConcurrentHashMap<String, DataNodeInfo>();
+    private final Map<String, DataNodeInfo> dataNodeCache = new ConcurrentHashMap<>();
 
-    public DataNodeManager() {
+    private final DataNodeAliveMonitor dataNodeAliveMonitor;
+
+    private final Server server;
+
+    public DataNodeManager(Server server) {
         // 启动数据节点存活状态检查监控线程
-        DataNodeAliveMonitor dataNodeAliveMonitor = new DataNodeAliveMonitor();
-        dataNodeAliveMonitor.setDaemon(true);
-        dataNodeAliveMonitor.start();
+        this.dataNodeAliveMonitor = new DataNodeAliveMonitor();
+        this.server = server;
+    }
+
+    public void start() {
+        this.dataNodeAliveMonitor.start();
     }
 
     /**
@@ -65,7 +73,7 @@ public class DataNodeManager {
         @Override
         public void run() {
             try {
-                while (true) {
+                while (!server.isClosing()) {
                     List<String> toRemoveDataNodes = new ArrayList<>();
 
                     Iterator<DataNodeInfo> dataNodeInfoIterator = dataNodeCache.values().iterator();

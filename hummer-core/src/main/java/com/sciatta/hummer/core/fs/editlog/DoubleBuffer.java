@@ -1,5 +1,6 @@
-package com.sciatta.hummer.namenode.server;
+package com.sciatta.hummer.core.fs.editlog;
 
+import com.sciatta.hummer.core.util.PathUtils;
 import com.sciatta.hummer.core.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,8 +11,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-
-import static com.sciatta.hummer.namenode.server.NameNodeConfig.EDITS_LOG_BUFFER_LIMIT;
 
 /**
  * Created by Rain on 2022/12/14<br>
@@ -36,6 +35,21 @@ public class DoubleBuffer {
      */
     private long lastFlushedTxId = 0L;
 
+    /**
+     * 磁盘同步最大内存缓存大小，单位：字节
+     */
+    private final int editsLogBufferLimit;
+
+    /**
+     * 事务日志持久化路径
+     */
+    private final String editsLogPath;
+
+    public DoubleBuffer(int editsLogBufferLimit, String editsLogPath) {
+        this.editsLogBufferLimit = editsLogBufferLimit;
+        this.editsLogPath = editsLogPath;
+    }
+
     public void write(EditLog log) throws IOException {
         currentBuffer.write(log);
         logger.debug("{} write success, current buffer size is {}", log, currentBuffer.size());
@@ -47,8 +61,8 @@ public class DoubleBuffer {
      * @return true，需要刷写磁盘；否则，不需要刷写磁盘
      */
     public boolean shouldSyncToDisk() {
-        if (currentBuffer.size() >= EDITS_LOG_BUFFER_LIMIT) {
-            logger.debug("current buffer[{}] >= EDIT_LOG_BUFFER_LIMIT[{}]", currentBuffer.size(), EDITS_LOG_BUFFER_LIMIT);
+        if (currentBuffer.size() >= this.editsLogBufferLimit) {
+            logger.debug("current buffer[{}] >= EDIT_LOG_BUFFER_LIMIT[{}]", currentBuffer.size(), this.editsLogBufferLimit);
             return true;
         }
         return false;
@@ -95,7 +109,7 @@ public class DoubleBuffer {
         private final ByteArrayOutputStream buffer;
 
         public EditLogBuffer() {
-            buffer = new ByteArrayOutputStream(EDITS_LOG_BUFFER_LIMIT * 2);
+            buffer = new ByteArrayOutputStream(editsLogBufferLimit * 2);
         }
 
         /**
@@ -129,7 +143,7 @@ public class DoubleBuffer {
                 return;
             }
 
-            Path editsLogFile = NameNodeConfig.getEditsLogFile(++lastFlushedTxId, latestWriteTxId);
+            Path editsLogFile = PathUtils.getEditsLogFile(editsLogPath, ++lastFlushedTxId, latestWriteTxId);
             logger.debug("sync disk path is " + editsLogFile.toFile().getPath());
 
             boolean flushFinish = false;

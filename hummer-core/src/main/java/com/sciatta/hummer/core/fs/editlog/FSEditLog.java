@@ -61,9 +61,9 @@ public class FSEditLog {
     /**
      * 写入事务日志
      *
-     * @param content 事务日志
+     * @param editLogSetterCallback 事务日志回调设置器
      */
-    public void logEdit(String content) {
+    public void logEdit(EditLogSetterCallback editLogSetterCallback) {
         synchronized (this) {
             // 当前缓存已经写满，正在切换空闲缓存，当前线程等待切换完成
             while (isSchedulingBuffer) {
@@ -84,7 +84,8 @@ public class FSEditLog {
             long txId = ++this.txId;
             localTxId.set(txId);
 
-            EditLog log = new EditLog(txId, content);
+            EditLog log = new EditLog(txId);
+            editLogSetterCallback.setEditLog(log);
 
             try {
                 doubleBuffer.write(log);   // 写入双缓存

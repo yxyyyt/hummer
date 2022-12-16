@@ -1,5 +1,6 @@
 package com.sciatta.hummer.core.fs.editlog;
 
+import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.core.util.PathUtils;
 import com.sciatta.hummer.core.util.StringUtils;
 import org.slf4j.Logger;
@@ -118,7 +119,7 @@ public class DoubleBuffer {
          * @param editLog 事务日志
          */
         public void write(EditLog editLog) throws IOException {
-            buffer.write(editLog.getContent().getBytes());
+            buffer.write(GsonUtils.toJson(editLog).getBytes());
             buffer.write(StringUtils.getNewLine().getBytes());
             latestWriteTxId = editLog.getTxId();
         }

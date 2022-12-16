@@ -2,6 +2,7 @@ package com.sciatta.hummer.core.fs;
 
 import com.sciatta.hummer.core.fs.directory.FSDirectory;
 import com.sciatta.hummer.core.fs.editlog.FSEditLog;
+import com.sciatta.hummer.core.fs.editlog.operation.MkDirOperation;
 import com.sciatta.hummer.core.server.Server;
 
 /**
@@ -26,7 +27,7 @@ public class FSNameSystem {
      */
     public boolean mkdir(String path) {
         this.fsDirectory.mkdir(path);
-        this.fsEditLog.logEdit("{'OP':'MKDIR','PATH':'" + path + "'}");
+        this.fsEditLog.logEdit(editLog -> editLog.setOperation(new MkDirOperation(path)));
         return true;
     }
 

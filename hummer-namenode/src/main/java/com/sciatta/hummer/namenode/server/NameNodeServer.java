@@ -1,7 +1,11 @@
 package com.sciatta.hummer.namenode.server;
 
 import com.sciatta.hummer.core.fs.FSNameSystem;
+import com.sciatta.hummer.core.fs.editlog.operation.DummyOperation;
+import com.sciatta.hummer.core.fs.editlog.operation.MkDirOperation;
+import com.sciatta.hummer.core.fs.editlog.operation.Operation;
 import com.sciatta.hummer.core.server.AbstractServer;
+import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import com.sciatta.hummer.namenode.datanode.DataNodeManager;
 import com.sciatta.hummer.namenode.rpc.NameNodeRpcServer;
@@ -28,7 +32,10 @@ public class NameNodeServer extends AbstractServer {
                 NameNodeConfig.EDITS_LOG_BUFFER_LIMIT,
                 NameNodeConfig.EDITS_LOG_PATH);
         this.dataNodeManager = new DataNodeManager(this);
-        this.nameNodeRpcServer = new NameNodeRpcServer(fsNameSystem, dataNodeManager,this);
+        this.nameNodeRpcServer = new NameNodeRpcServer(fsNameSystem, dataNodeManager, this);
+
+        // 注册运行时类型
+        registerGsonRuntimeType();
     }
 
     @Override
@@ -47,5 +54,13 @@ public class NameNodeServer extends AbstractServer {
 
         // 持久化元数据
         this.fsNameSystem.persist();
+    }
+
+    /**
+     * 注册运行时类型
+     */
+    @SuppressWarnings("unchecked")
+    private void registerGsonRuntimeType() {
+        GsonUtils.register(Operation.class, new Class[]{DummyOperation.class, MkDirOperation.class});
     }
 }

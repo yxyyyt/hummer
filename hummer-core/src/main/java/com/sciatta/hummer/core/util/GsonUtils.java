@@ -20,7 +20,7 @@ public class GsonUtils {
     private static final List<RuntimeTypeAdapterFactory<?>> factories = new ArrayList<>();
 
     /**
-     * 注册父Class和子Class数组，用于支持多态属性
+     * 注册运行时类型，用于支持多态属性
      *
      * @param parent   父Class
      * @param children 子Class数组

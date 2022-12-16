@@ -1,5 +1,7 @@
 package com.sciatta.hummer.core.fs.editlog;
 
+import com.sciatta.hummer.core.fs.editlog.operation.Operation;
+
 /**
  * Created by Rain on 2022/12/14<br>
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
@@ -9,31 +11,38 @@ public class EditLog {
     /**
      * 事务标识
      */
-    private final long txId;
+    private long txId;
 
     /**
-     * 事务日志内容
+     * 事务操作日志
      */
-    private final String content;
+    private Operation operation;
 
-    public EditLog(long txId, String content) {
+    public EditLog(long txId) {
         this.txId = txId;
-        this.content = content;
     }
 
     public long getTxId() {
         return txId;
     }
 
-    public String getContent() {
-        return content;
+    public void setTxId(long txId) {
+        this.txId = txId;
+    }
+
+    public Operation getOperation() {
+        return operation;
+    }
+
+    public void setOperation(Operation operation) {
+        this.operation = operation;
     }
 
     @Override
     public String toString() {
         return "EditLog{" +
                 "txId=" + txId +
-                ", content='" + content + '\'' +
+                ", operation=" + operation +
                 '}';
     }
 }

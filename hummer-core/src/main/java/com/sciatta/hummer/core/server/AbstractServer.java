@@ -106,9 +106,9 @@ public abstract class AbstractServer implements Server {
     private void registerShutdownHook() {
         // 注册回调钩子
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            logger.warn("*** closing {} since JVM is shutting down", AbstractServer.this.getClass().getSimpleName());
+            logger.warn("*** shutting down {} since JVM is shutting down", AbstractServer.this.getClass().getSimpleName());
             AbstractServer.this.close();
-            logger.warn("*** {} closed", AbstractServer.this.getClass().getSimpleName());
+            logger.warn("*** {} shut down", AbstractServer.this.getClass().getSimpleName());
         }));
     }
 

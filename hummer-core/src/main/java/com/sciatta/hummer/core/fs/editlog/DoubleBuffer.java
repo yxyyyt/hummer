@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 /**
  * Created by Rain on 2022/12/14<br>
@@ -51,6 +52,19 @@ public class DoubleBuffer {
         this.editsLogPath = editsLogPath;
     }
 
+    /**
+     * 获取当前缓存的内存缓冲区数据
+     *
+     * @return 内存缓冲区数据
+     */
+    public byte[] getBufferedDataFromCurrentBuffer() {
+        if (this.currentBuffer.size() == 0) {
+            return null;
+        }
+
+        return this.currentBuffer.getBufferedData();
+    }
+
     public void write(EditLog log) throws IOException {
         currentBuffer.write(log);
         logger.debug("{} write success, current buffer size is {}", log, currentBuffer.size());
@@ -81,12 +95,14 @@ public class DoubleBuffer {
 
     /**
      * 将缓存中的数据刷写磁盘
+     *
+     * @param flushedSegments 已同步到磁盘的事务日志分段
      */
-    public void flush() throws IOException {
+    public void flush(List<FlushedSegment> flushedSegments) throws IOException {
         logger.debug("start flush ->");
         long start = System.currentTimeMillis();
 
-        syncBuffer.flush();
+        syncBuffer.flush(flushedSegments);
         syncBuffer.clear();
 
         logger.debug("<- flush success, cost " + (System.currentTimeMillis() - start) + " ms");
@@ -136,9 +152,10 @@ public class DoubleBuffer {
         /**
          * 将内存缓冲区数据强制刷写到磁盘
          *
+         * @param flushedSegments 已同步到磁盘的事务日志分段
          * @throws IOException IO异常
          */
-        public void flush() throws IOException {
+        public void flush(List<FlushedSegment> flushedSegments) throws IOException {
             if (lastFlushedTxId == latestWriteTxId) {
                 logger.debug("no editLog to flush");
                 return;
@@ -156,6 +173,7 @@ public class DoubleBuffer {
                 flushFinish = true;
             } finally {
                 if (flushFinish) {
+                    flushedSegments.add(new FlushedSegment(lastFlushedTxId, latestWriteTxId));
                     lastFlushedTxId = latestWriteTxId;
                 }
             }
@@ -166,6 +184,15 @@ public class DoubleBuffer {
          */
         public void clear() {
             buffer.reset();
+        }
+
+        /**
+         * 获取内存缓冲区数据
+         *
+         * @return 内存缓冲区数据
+         */
+        public byte[] getBufferedData() {
+            return this.buffer.toByteArray();
         }
     }
 }

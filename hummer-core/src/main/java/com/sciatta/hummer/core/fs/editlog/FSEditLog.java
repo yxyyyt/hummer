@@ -6,6 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -50,12 +53,37 @@ public class FSEditLog {
      */
     private final int editsLogBufferLimit;
 
+    /**
+     * 缓存已同步到磁盘的事务日志分段
+     */
+    private final List<FlushedSegment> flushedSegments = new CopyOnWriteArrayList<>();
+
     private final Server server;
 
     public FSEditLog(Server server, int editsLogBufferLimit, String editsLogPath) {
         this.editsLogBufferLimit = editsLogBufferLimit;
         this.doubleBuffer = new DoubleBuffer(editsLogBufferLimit, editsLogPath);
         this.server = server;
+    }
+
+    /**
+     * 获取已同步到磁盘的事务日志分段
+     *
+     * @return 已同步到磁盘的事务日志分段
+     */
+    public List<FlushedSegment> getFlushedSegments() {
+        return Collections.unmodifiableList(flushedSegments);
+    }
+
+    /**
+     * 获取双缓存的内存缓冲区数据
+     *
+     * @return 内存缓冲区数据
+     */
+    public byte[] getBufferedDataFromDoubleBuffer() {
+        synchronized (this) {
+            return this.doubleBuffer.getBufferedDataFromCurrentBuffer();
+        }
     }
 
     /**
@@ -157,7 +185,7 @@ public class FSEditLog {
 
         // 刷写磁盘
         try {
-            doubleBuffer.flush();
+            doubleBuffer.flush(flushedSegments);
         } catch (IOException e) {
             logger.error("{} exception while flush editLog buffer", e.getMessage());
             throw new HummerException("%s exception while flush editLog buffer", e.getMessage());

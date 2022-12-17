@@ -9,6 +9,7 @@ service NameNodeService {
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
   rpc Mkdir(MkdirRequest) returns (MkdirResponse);
   rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+  rpc FetchEditsLog(FetchEditsLogRequest) returns (FetchEditsLogResponse);
 }
 
 // Register
@@ -43,4 +44,14 @@ message ShutdownRequest{
 }
 message ShutdownResponse{
   int32 status = 1;
+}
+
+// FetchEditsLog
+message FetchEditsLogRequest{
+  int32 code = 1;
+  int64 syncedTxId = 2;
+}
+message FetchEditsLogResponse{
+  string editsLog = 1;
+  int32 status = 2;
 }

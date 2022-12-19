@@ -1,7 +1,8 @@
 package com.sciatta.hummer.core.fs.directory.replay;
 
-import com.sciatta.hummer.core.fs.FSNameSystem;
+import com.sciatta.hummer.core.fs.directory.FSDirectory;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
+import com.sciatta.hummer.core.fs.editlog.FSEditLog;
 import com.sciatta.hummer.core.fs.editlog.operation.MkDirOperation;
 import com.sciatta.hummer.core.fs.editlog.operation.OperationType;
 
@@ -12,10 +13,12 @@ import com.sciatta.hummer.core.fs.editlog.operation.OperationType;
  */
 public class MkdirReplayHandler implements ReplayHandler {
 
-    private final FSNameSystem fsNameSystem;
+    private final FSDirectory fsDirectory;
+    private final FSEditLog fsEditLog;
 
-    public MkdirReplayHandler(FSNameSystem fsNameSystem) {
-        this.fsNameSystem = fsNameSystem;
+    public MkdirReplayHandler(FSDirectory fsDirectory, FSEditLog fsEditLog) {
+        this.fsDirectory = fsDirectory;
+        this.fsEditLog = fsEditLog;
     }
 
     @Override
@@ -25,6 +28,7 @@ public class MkdirReplayHandler implements ReplayHandler {
 
     @Override
     public void replay(EditLog editLog) {
-        fsNameSystem.mkdir(((MkDirOperation) editLog.getOperation()).getPath());
+        this.fsEditLog.logEdit(editLog);
+        this.fsDirectory.mkdir(editLog.getTxId(), ((MkDirOperation) editLog.getOperation()).getPath());
     }
 }

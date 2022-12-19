@@ -2,6 +2,7 @@ package com.sciatta.hummer.core.fs;
 
 import com.sciatta.hummer.core.exception.HummerException;
 import com.sciatta.hummer.core.fs.directory.FSDirectory;
+import com.sciatta.hummer.core.fs.directory.FSImage;
 import com.sciatta.hummer.core.fs.directory.replay.MkdirReplayHandler;
 import com.sciatta.hummer.core.fs.directory.replay.ReplayHandler;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
@@ -26,13 +27,23 @@ import java.util.List;
 /**
  * Created by Rain on 2022/12/13<br>
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
- * 管理元数据
+ * 管理元数据抽象实现
  */
 public class FSNameSystem {
     private static final Logger logger = LoggerFactory.getLogger(FSNameSystem.class);
 
     private final FSDirectory fsDirectory;
     private final FSEditLog fsEditLog;
+
+    /**
+     * 上一次检查点的最大事务标识
+     */
+    private volatile long lastCheckPointMaxTxId;
+
+    /**
+     * 上一次检查点完成的时间戳
+     */
+    private volatile long lastCheckPointTimestamp;
 
     /**
      * 事务日志持久化路径
@@ -42,15 +53,32 @@ public class FSNameSystem {
     /**
      * 已注册的重放处理器
      */
-    private List<ReplayHandler> registeredReplayHandlers = new ArrayList<>();
+    private final List<ReplayHandler> registeredReplayHandlers = new ArrayList<>();
 
     public FSNameSystem(Server server, int editsLogBufferLimit, String editsLogPath) {
         this.fsDirectory = new FSDirectory();
         this.fsEditLog = new FSEditLog(server, editsLogBufferLimit, editsLogPath);
+
         this.editsLogPath = editsLogPath;
 
         // 注册重放处理器
         registerReplayHandlers();
+    }
+
+    public long getLastCheckPointMaxTxId() {
+        return lastCheckPointMaxTxId;
+    }
+
+    public void setLastCheckPointMaxTxId(long lastCheckPointMaxTxId) {
+        this.lastCheckPointMaxTxId = lastCheckPointMaxTxId;
+    }
+
+    public long getLastCheckPointTimestamp() {
+        return lastCheckPointTimestamp;
+    }
+
+    public void setLastCheckPointTimestamp(long lastCheckPointTimestamp) {
+        this.lastCheckPointTimestamp = lastCheckPointTimestamp;
     }
 
     /**
@@ -60,8 +88,12 @@ public class FSNameSystem {
      * @return 是否创建目录成功；true，创建成功；否则，创建失败
      */
     public boolean mkdir(String path) {
-        this.fsDirectory.mkdir(path);
-        this.fsEditLog.logEdit(editLog -> editLog.setOperation(new MkDirOperation(path)));
+        EditLog editLog = new EditLog();
+        editLog.setOperation(new MkDirOperation(path));
+
+        this.fsEditLog.logEdit(editLog);
+        this.fsDirectory.mkdir(editLog.getTxId(), path);
+
         return true;
     }
 
@@ -143,9 +175,27 @@ public class FSNameSystem {
     }
 
     /**
+     * 获取当前目录树对应的镜像
+     *
+     * @return 当前目录树对应的镜像
+     */
+    public FSImage getImage() {
+        return this.fsDirectory.getImage(this.lastCheckPointMaxTxId);
+    }
+
+    /**
      * 注册重放处理器
      */
     private void registerReplayHandlers() {
-        this.registeredReplayHandlers.add(new MkdirReplayHandler(this));
+        this.registeredReplayHandlers.add(new MkdirReplayHandler(this.fsDirectory, this.fsEditLog));
+    }
+
+    /**
+     * 获得当前同步到的事务标识
+     *
+     * @return 当前同步到的事务标识
+     */
+    public long getSyncedTxId() {
+        return this.fsDirectory.getMaxTxId();
     }
 }

@@ -88,10 +88,8 @@ public class FSEditLog {
 
     /**
      * 写入事务日志
-     *
-     * @param editLogSetterCallback 事务日志回调设置器
      */
-    public void logEdit(EditLogSetterCallback editLogSetterCallback) {
+    public void logEdit(EditLog editLog) {
         synchronized (this) {
             // 当前缓存已经写满，正在切换空闲缓存，当前线程等待切换完成
             while (isSchedulingBuffer) {
@@ -108,15 +106,19 @@ public class FSEditLog {
                 return;
             }
 
-            // 多线程同步顺序写入双缓存，保证txId顺序单调递增
-            long txId = ++this.txId;
-            localTxId.set(txId);
+            if (editLog.getTxId() == Long.MIN_VALUE) {
+                // 多线程同步顺序写入双缓存，保证txId顺序单调递增
+                ++this.txId;
+                editLog.setTxId(this.txId);
+            } else {
+                // 重放事务日志
+                this.txId = editLog.getTxId();
+            }
 
-            EditLog log = new EditLog(txId);
-            editLogSetterCallback.setEditLog(log);
+            localTxId.set(this.txId);
 
             try {
-                doubleBuffer.write(log);   // 写入双缓存
+                doubleBuffer.write(editLog);   // 写入双缓存
             } catch (IOException e) {
                 logger.error("{} exception while write editLog buffer", e.getMessage());
             }

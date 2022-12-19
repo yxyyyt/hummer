@@ -11,12 +11,15 @@ public class EditLog {
     /**
      * 事务标识
      */
-    private long txId;
+    private long txId = Long.MIN_VALUE;
 
     /**
      * 事务操作日志
      */
     private Operation operation;
+
+    public EditLog() {
+    }
 
     public EditLog(long txId) {
         this.txId = txId;

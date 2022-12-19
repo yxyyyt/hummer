@@ -55,4 +55,25 @@ public class PathUtils {
         String file = editsLogPath + "edits-" + flushedMinTxId + "-" + flushedMaxTxId + ".log";
         return PathUtils.getPathAndCreateDirectoryIfNotExists(file);
     }
+
+    /**
+     * 获取镜像元数据文件存储路径
+     *
+     * @param checkPointPath      检查点持久化路径
+     * @param maxTxId             镜像元数据最大事务标识
+     * @param checkpointTimestamp 镜像元数据生成的时间戳
+     * @param addLastSuffix       是否文件后增加 .last 后缀；true，增加后缀
+     * @return 镜像元数据文件存储路径
+     * @throws IOException IO异常
+     */
+    public static Path getCheckPointFile(String checkPointPath, long maxTxId, long checkpointTimestamp, boolean addLastSuffix) throws IOException {
+        StringBuilder sb = new StringBuilder(checkPointPath);
+        sb.append("fsimage-").append(maxTxId).append(".").append(checkpointTimestamp);
+
+        if (addLastSuffix) {
+            sb.append(".last");
+        }
+
+        return PathUtils.getPathAndCreateDirectoryIfNotExists(sb.toString());
+    }
 }

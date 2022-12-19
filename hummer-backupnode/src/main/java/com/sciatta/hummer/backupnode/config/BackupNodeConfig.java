@@ -17,6 +17,16 @@ public class BackupNodeConfig {
     public static final int NAME_NODE_RPC_PORT = 3030;
 
     /**
+     * 元数据节点镜像上传主机
+     */
+    public static final String NAME_NODE_IMAGE_UPLOAD_HOST = "localhost";
+
+    /**
+     * 元数据节点镜像上传端口
+     */
+    public static final int NAME_NODE_IMAGE_UPLOAD_PORT = 4040;
+
+    /**
      * 向元数据节点抓取一个批次事务日志进行重放的限定数量
      */
     public static final int BACKUP_NODE_FETCH_SIZE = 10;
@@ -29,10 +39,20 @@ public class BackupNodeConfig {
     /**
      * 元数据节点根目录
      */
-    public static final String BACKUP_NODE_ROOT_PATH = "D:\\data\\hummer\\data\\backupnode\\";
+    public static final String BACKUP_NODE_ROOT_PATH = "D:\\data\\hummer\\meta-data\\backupnode\\";
 
     /**
      * 事务日志持久化路径
      */
     public static final String EDITS_LOG_PATH = BACKUP_NODE_ROOT_PATH + "editslog\\";
+
+    /**
+     * 检查点路径
+     */
+    public static final String CHECKPOINT_PATH = BACKUP_NODE_ROOT_PATH + "checkpoint\\";
+
+    /**
+     * 检查点定时执行间隔
+     */
+    public static final int CHECKPOINT_INTERVAL = 60 * 1000;
 }

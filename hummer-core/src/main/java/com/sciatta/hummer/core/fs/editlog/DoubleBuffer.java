@@ -65,9 +65,15 @@ public class DoubleBuffer {
         return this.currentBuffer.getBufferedData();
     }
 
-    public void write(EditLog log) throws IOException {
-        currentBuffer.write(log);
-        logger.debug("{} write success, current buffer size is {}", log, currentBuffer.size());
+    /**
+     * 向双缓存写入事务日志
+     *
+     * @param editLog 事务日志
+     * @throws IOException IO异常
+     */
+    public void write(EditLog editLog) throws IOException {
+        currentBuffer.write(editLog);
+        logger.debug("{} write success, current buffer size is {}", editLog, currentBuffer.size());
     }
 
     /**

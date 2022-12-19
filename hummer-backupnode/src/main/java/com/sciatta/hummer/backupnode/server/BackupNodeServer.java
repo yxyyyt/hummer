@@ -1,7 +1,12 @@
 package com.sciatta.hummer.backupnode.server;
 
+import com.sciatta.hummer.backupnode.fs.FSEditsLogSynchronizer;
+import com.sciatta.hummer.backupnode.fs.FSImageCheckPointer;
 import com.sciatta.hummer.backupnode.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.core.fs.FSNameSystem;
+import com.sciatta.hummer.core.fs.directory.INode;
+import com.sciatta.hummer.core.fs.directory.INodeDirectory;
+import com.sciatta.hummer.core.fs.directory.INodeFile;
 import com.sciatta.hummer.core.fs.editlog.operation.DummyOperation;
 import com.sciatta.hummer.core.fs.editlog.operation.MkDirOperation;
 import com.sciatta.hummer.core.fs.editlog.operation.Operation;
@@ -23,14 +28,16 @@ import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.EDITS_LOG_PA
 public class BackupNodeServer extends AbstractServer {
     private static final Logger logger = LoggerFactory.getLogger(BackupNodeServer.class);
 
-    private final NameNodeRpcClient nameNodeRpcClient;
     private final FSNameSystem fsNameSystem;
-    private final FSEditsLogFetcher fsEditsLogFetcher;
+    private final FSEditsLogSynchronizer fsEditsLogSynchronizer;
+    private final FSImageCheckPointer fsImageCheckPointer;
 
     public BackupNodeServer() {
-        this.nameNodeRpcClient = new NameNodeRpcClient();
+        NameNodeRpcClient nameNodeRpcClient = new NameNodeRpcClient();
+
         this.fsNameSystem = new FSNameSystem(this, EDITS_LOG_BUFFER_LIMIT, EDITS_LOG_PATH);
-        this.fsEditsLogFetcher = new FSEditsLogFetcher(nameNodeRpcClient, fsNameSystem, this);
+        this.fsEditsLogSynchronizer = new FSEditsLogSynchronizer(nameNodeRpcClient, fsNameSystem, this);
+        this.fsImageCheckPointer = new FSImageCheckPointer(fsNameSystem, this);
 
         // 注册运行时类型
         registerGsonRuntimeType();
@@ -39,7 +46,10 @@ public class BackupNodeServer extends AbstractServer {
     @Override
     protected void doStart() throws IOException {
         // 启动同步事务日志管理组件
-        this.fsEditsLogFetcher.start();
+        this.fsEditsLogSynchronizer.start();
+
+        // 启动镜像检查点管理组件
+        this.fsImageCheckPointer.start();
     }
 
     @Override
@@ -54,5 +64,6 @@ public class BackupNodeServer extends AbstractServer {
     @SuppressWarnings("unchecked")
     private void registerGsonRuntimeType() {
         GsonUtils.register(Operation.class, new Class[]{DummyOperation.class, MkDirOperation.class});
+        GsonUtils.register(INode.class, new Class[]{INodeFile.class, INodeDirectory.class});
     }
 }

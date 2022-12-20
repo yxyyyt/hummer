@@ -27,6 +27,11 @@ public class NameNodeConfig {
     public static final String CHECKPOINT_PATH = NAME_NODE_ROOT_PATH + "checkpoint\\";
 
     /**
+     * 运行时仓库路径
+     */
+    public static final String RUNTIME_REPOSITORY_PATH = NAME_NODE_ROOT_PATH+ "runtime\\";
+
+    /**
      * 元数据节点RPC服务端口
      */
     public static final int NAME_NODE_RPC_SERVER_PORT = 3030;

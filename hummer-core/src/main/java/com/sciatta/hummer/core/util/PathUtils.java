@@ -76,4 +76,14 @@ public class PathUtils {
 
         return PathUtils.getPathAndCreateDirectoryIfNotExists(sb.toString());
     }
+
+    /**
+     * 获取运行时仓库文件存储路径
+     *
+     * @param runtimeRepositoryPath 运行时仓库持久化路径
+     * @return 运行时仓库文件存储路径
+     */
+    public static Path getRuntimeRepositoryFile(String runtimeRepositoryPath) throws IOException {
+        return PathUtils.getPathAndCreateDirectoryIfNotExists(runtimeRepositoryPath + "runtime.repository");
+    }
 }

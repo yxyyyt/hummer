@@ -52,6 +52,11 @@ public class BackupNodeConfig {
     public static final String CHECKPOINT_PATH = BACKUP_NODE_ROOT_PATH + "checkpoint\\";
 
     /**
+     * 运行时仓库路径
+     */
+    public static final String RUNTIME_REPOSITORY_PATH = BACKUP_NODE_ROOT_PATH+ "runtime\\";
+
+    /**
      * 检查点定时执行间隔
      */
     public static final int CHECKPOINT_INTERVAL = 60 * 1000;

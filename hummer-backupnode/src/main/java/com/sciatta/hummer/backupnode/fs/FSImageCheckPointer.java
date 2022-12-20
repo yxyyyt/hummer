@@ -16,6 +16,8 @@ import java.nio.file.StandardOpenOption;
 
 import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.CHECKPOINT_INTERVAL;
 import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.CHECKPOINT_PATH;
+import static com.sciatta.hummer.backupnode.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
+import static com.sciatta.hummer.backupnode.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
 
 /**
  * Created by Rain on 2022/10/23<br>
@@ -42,7 +44,8 @@ public class FSImageCheckPointer extends Thread {
             } catch (InterruptedException ignore) {
             }
 
-            FSImage fsImage = fsNameSystem.getImage();
+            FSImage fsImage = fsNameSystem.getImage(
+                    fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0));
             if (fsImage != null) {
                 logger.debug("start checkpoint, current fsImage max txId is " + fsImage.getMaxTxId());
 
@@ -69,7 +72,9 @@ public class FSImageCheckPointer extends Thread {
     private boolean beforeCheckPoint() {
         try {
             Path checkPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
-                    fsNameSystem.getLastCheckPointMaxTxId(), fsNameSystem.getLastCheckPointTimestamp(), false);
+                    fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
+                    fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
+                    false);
 
             // 不存在上一次备份的镜像
             if (!Files.exists(checkPointFile)) {
@@ -78,7 +83,9 @@ public class FSImageCheckPointer extends Thread {
             }
 
             Path lastCheckPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
-                    fsNameSystem.getLastCheckPointMaxTxId(), fsNameSystem.getLastCheckPointTimestamp(), true);
+                    fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
+                    fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
+                    true);
 
             Files.move(checkPointFile, lastCheckPointFile); // 重命名上一次生成的镜像
 
@@ -172,14 +179,16 @@ public class FSImageCheckPointer extends Thread {
         try {
             // 若存在临时镜像文件，则删除
             Path lastCheckPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
-                    fsNameSystem.getLastCheckPointMaxTxId(), fsNameSystem.getLastCheckPointTimestamp(), true);
+                    fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
+                    fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
+                    true);
             if (Files.deleteIfExists(lastCheckPointFile)) {
                 logger.debug("delete last checkpoint file {}", lastCheckPointFile.toFile().getPath());
             }
 
             // 更新本地checkpoint信息
-            this.fsNameSystem.setLastCheckPointMaxTxId(fsImage.getMaxTxId());
-            this.fsNameSystem.setLastCheckPointTimestamp(fsImage.getTimestamp());
+            fsNameSystem.getRuntimeRepository().setParameter(LAST_CHECKPOINT_MAX_TX_ID, fsImage.getMaxTxId());
+            fsNameSystem.getRuntimeRepository().setParameter(LAST_CHECKPOINT_TIMESTAMP, fsImage.getTimestamp());
 
             return true;
         } catch (IOException e) {

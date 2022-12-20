@@ -9,6 +9,7 @@ import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FSEditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
 import com.sciatta.hummer.core.fs.editlog.operation.MkDirOperation;
+import com.sciatta.hummer.core.runtime.RuntimeRepository;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.core.util.PathUtils;
@@ -34,16 +35,7 @@ public class FSNameSystem {
 
     private final FSDirectory fsDirectory;
     private final FSEditLog fsEditLog;
-
-    /**
-     * 上一次检查点的最大事务标识
-     */
-    private volatile long lastCheckPointMaxTxId;
-
-    /**
-     * 上一次检查点完成的时间戳
-     */
-    private volatile long lastCheckPointTimestamp;
+    private final RuntimeRepository runtimeRepository;
 
     /**
      * 事务日志持久化路径
@@ -55,7 +47,8 @@ public class FSNameSystem {
      */
     private final List<ReplayHandler> registeredReplayHandlers = new ArrayList<>();
 
-    public FSNameSystem(Server server, int editsLogBufferLimit, String editsLogPath) {
+    public FSNameSystem(Server server, int editsLogBufferLimit, String editsLogPath, String runtimeRepositoryPath) {
+        this.runtimeRepository = new RuntimeRepository(runtimeRepositoryPath);
         this.fsDirectory = new FSDirectory();
         this.fsEditLog = new FSEditLog(server, editsLogBufferLimit, editsLogPath);
 
@@ -65,20 +58,37 @@ public class FSNameSystem {
         registerReplayHandlers();
     }
 
-    public long getLastCheckPointMaxTxId() {
-        return lastCheckPointMaxTxId;
+    public RuntimeRepository getRuntimeRepository() {
+        return runtimeRepository;
     }
 
-    public void setLastCheckPointMaxTxId(long lastCheckPointMaxTxId) {
-        this.lastCheckPointMaxTxId = lastCheckPointMaxTxId;
+    /**
+     * 恢复文件系统元数据
+     */
+    public void restore() {
+        // 运行时仓库恢复数据
+        try {
+            this.runtimeRepository.restore();
+        } catch (IOException e) {
+            logger.error("{} while name system restore", e.getMessage());
+            throw new HummerException(e);
+        }
     }
 
-    public long getLastCheckPointTimestamp() {
-        return lastCheckPointTimestamp;
-    }
+    /**
+     * 持久化文件系统元数据
+     */
+    public void save() {
+        // 持久化内存中的事务日志
+        this.fsEditLog.forceSync();
 
-    public void setLastCheckPointTimestamp(long lastCheckPointTimestamp) {
-        this.lastCheckPointTimestamp = lastCheckPointTimestamp;
+        // 运行时仓库保存数据
+        try {
+            this.runtimeRepository.save();
+        } catch (IOException e) {
+            logger.error("{} while name system save", e.getMessage());
+            throw new HummerException(e);
+        }
     }
 
     /**
@@ -95,13 +105,6 @@ public class FSNameSystem {
         this.fsDirectory.mkdir(editLog.getTxId(), path);
 
         return true;
-    }
-
-    /**
-     * 持久化元数据
-     */
-    public void persist() {
-        this.fsEditLog.forceSync();
     }
 
     /**
@@ -146,8 +149,7 @@ public class FSNameSystem {
         List<EditLog> ans = new LinkedList<>();
 
         try {
-            List<String> jsons = Files.readAllLines(
-                    PathUtils.getEditsLogFile(editsLogPath, flushedSegment.getMinTxId(), flushedSegment.getMaxTxId()), StandardCharsets.UTF_8);
+            List<String> jsons = Files.readAllLines(PathUtils.getEditsLogFile(editsLogPath, flushedSegment.getMinTxId(), flushedSegment.getMaxTxId()), StandardCharsets.UTF_8);
             jsons.forEach(json -> {
                 ans.add(GsonUtils.fromJson(json, EditLog.class));
             });
@@ -177,10 +179,11 @@ public class FSNameSystem {
     /**
      * 获取当前目录树对应的镜像
      *
+     * @param lastCheckPointMaxTxId 上一次检查点的最大事务标识
      * @return 当前目录树对应的镜像
      */
-    public FSImage getImage() {
-        return this.fsDirectory.getImage(this.lastCheckPointMaxTxId);
+    public FSImage getImage(long lastCheckPointMaxTxId) {
+        return this.fsDirectory.getImage(lastCheckPointMaxTxId);
     }
 
     /**

@@ -9,7 +9,6 @@ import com.sciatta.hummer.core.fs.editlog.operation.MkDirOperation;
 import com.sciatta.hummer.core.fs.editlog.operation.Operation;
 import com.sciatta.hummer.core.server.AbstractServer;
 import com.sciatta.hummer.core.util.GsonUtils;
-import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import com.sciatta.hummer.namenode.datanode.DataNodeManager;
 import com.sciatta.hummer.namenode.fs.FSImageUploadServer;
 import com.sciatta.hummer.namenode.rpc.NameNodeRpcServer;
@@ -17,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+
+import static com.sciatta.hummer.namenode.config.NameNodeConfig.*;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -34,8 +35,10 @@ public class NameNodeServer extends AbstractServer {
 
     public NameNodeServer() {
         this.fsNameSystem = new FSNameSystem(this,
-                NameNodeConfig.EDITS_LOG_BUFFER_LIMIT,
-                NameNodeConfig.EDITS_LOG_PATH);
+                EDITS_LOG_BUFFER_LIMIT,
+                EDITS_LOG_PATH,
+                RUNTIME_REPOSITORY_PATH
+        );
         this.dataNodeManager = new DataNodeManager(this);
         this.nameNodeRpcServer = new NameNodeRpcServer(fsNameSystem, dataNodeManager, this);
         this.fsImageUploadServer = new FSImageUploadServer(fsNameSystem, this);
@@ -46,6 +49,9 @@ public class NameNodeServer extends AbstractServer {
 
     @Override
     protected void doStart() throws IOException {
+        // 恢复文件系统元数据
+        this.fsNameSystem.restore();
+
         // 启动RPC服务
         this.nameNodeRpcServer.start();
 
@@ -61,8 +67,8 @@ public class NameNodeServer extends AbstractServer {
         // 停止RPC服务
         this.nameNodeRpcServer.stop();
 
-        // 持久化元数据
-        this.fsNameSystem.persist();
+        // 持久化文件系统元数据
+        this.fsNameSystem.save();
     }
 
     /**

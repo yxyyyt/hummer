@@ -17,6 +17,8 @@ import java.util.Iterator;
 
 import static com.sciatta.hummer.namenode.config.NameNodeConfig.CHECKPOINT_PATH;
 import static com.sciatta.hummer.namenode.config.NameNodeConfig.NAME_NODE_IMAGE_UPLOAD_SERVER_PORT;
+import static com.sciatta.hummer.namenode.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
+import static com.sciatta.hummer.namenode.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
 
 /**
  * Created by Rain on 2022/10/25<br>
@@ -222,7 +224,9 @@ public class FSImageUploadServer extends Thread {
         }
 
         Path checkPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
-                fsNameSystem.getLastCheckPointMaxTxId(), fsNameSystem.getLastCheckPointTimestamp(), false);
+                fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
+                fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
+                false);
 
         // 不存在上一次备份的镜像
         if (!Files.exists(checkPointFile)) {
@@ -231,7 +235,9 @@ public class FSImageUploadServer extends Thread {
         }
 
         Path lastCheckPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
-                fsNameSystem.getLastCheckPointMaxTxId(), fsNameSystem.getLastCheckPointTimestamp(), true);
+                fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
+                fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
+                true);
 
         Files.move(checkPointFile, lastCheckPointFile); // 重命名上一次生成的镜像
 
@@ -440,14 +446,16 @@ public class FSImageUploadServer extends Thread {
     private void afterWriteFsImage() throws IOException {
         // 若存在临时镜像文件，则删除
         Path lastCheckPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
-                fsNameSystem.getLastCheckPointMaxTxId(), fsNameSystem.getLastCheckPointTimestamp(), true);
+                fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
+                fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
+                true);
         if (Files.deleteIfExists(lastCheckPointFile)) {
             logger.debug("delete last checkpoint file {}", lastCheckPointFile.toFile().getPath());
         }
 
         // 更新本地checkpoint信息
-        this.fsNameSystem.setLastCheckPointMaxTxId(cachedFSImage.checkPointMaxTxId);
-        this.fsNameSystem.setLastCheckPointTimestamp(cachedFSImage.checkPointTimestamp);
+        fsNameSystem.getRuntimeRepository().setParameter(LAST_CHECKPOINT_MAX_TX_ID, cachedFSImage.checkPointMaxTxId);
+        fsNameSystem.getRuntimeRepository().setParameter(LAST_CHECKPOINT_TIMESTAMP, cachedFSImage.checkPointTimestamp);
 
         // 清空缓存
         this.cachedCheckPointMaxTxId.clear();

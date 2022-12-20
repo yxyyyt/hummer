@@ -17,8 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.EDITS_LOG_BUFFER_LIMIT;
-import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.EDITS_LOG_PATH;
+import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.*;
 
 /**
  * Created by Rain on 2022/12/15<br>
@@ -35,7 +34,7 @@ public class BackupNodeServer extends AbstractServer {
     public BackupNodeServer() {
         NameNodeRpcClient nameNodeRpcClient = new NameNodeRpcClient();
 
-        this.fsNameSystem = new FSNameSystem(this, EDITS_LOG_BUFFER_LIMIT, EDITS_LOG_PATH);
+        this.fsNameSystem = new FSNameSystem(this, EDITS_LOG_BUFFER_LIMIT, EDITS_LOG_PATH, RUNTIME_REPOSITORY_PATH);
         this.fsEditsLogSynchronizer = new FSEditsLogSynchronizer(nameNodeRpcClient, fsNameSystem, this);
         this.fsImageCheckPointer = new FSImageCheckPointer(fsNameSystem, this);
 
@@ -45,6 +44,9 @@ public class BackupNodeServer extends AbstractServer {
 
     @Override
     protected void doStart() throws IOException {
+        // 恢复文件系统元数据
+        this.fsNameSystem.restore();
+
         // 启动同步事务日志管理组件
         this.fsEditsLogSynchronizer.start();
 
@@ -54,8 +56,8 @@ public class BackupNodeServer extends AbstractServer {
 
     @Override
     protected void doClose() {
-        // 持久化元数据
-        this.fsNameSystem.persist();
+        // 持久化文件系统元数据
+        this.fsNameSystem.save();
     }
 
     /**

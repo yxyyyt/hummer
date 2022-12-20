@@ -32,6 +32,10 @@ public class FSDirectory {
         return maxTxId;
     }
 
+    public INodeDirectory getDirTree() {
+        return dirTree;
+    }
+
     /**
      * 读锁加锁
      */
@@ -105,6 +109,7 @@ public class FSDirectory {
 
                 INodeDirectory child = new INodeDirectory(childPath);
                 parent.addChild(child);
+                parent = child;
             }
         } finally {
             this.maxTxId = txId;    // 设置当前目录树对应的最大事务标识

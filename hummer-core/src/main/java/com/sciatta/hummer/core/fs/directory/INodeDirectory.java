@@ -38,4 +38,11 @@ public class INodeDirectory implements INode {
         this.children = children;
     }
 
+    @Override
+    public String toString() {
+        return "INodeDirectory{" +
+                "path='" + path + '\'' +
+                ", children=" + children +
+                '}';
+    }
 }

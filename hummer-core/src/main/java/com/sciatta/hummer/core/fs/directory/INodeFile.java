@@ -17,4 +17,10 @@ public class INodeFile implements INode {
         this.name = name;
     }
 
+    @Override
+    public String toString() {
+        return "INodeFile{" +
+                "name='" + name + '\'' +
+                '}';
+    }
 }

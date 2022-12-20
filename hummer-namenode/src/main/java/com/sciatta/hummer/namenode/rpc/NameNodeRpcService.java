@@ -181,12 +181,12 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
      * @return 待同步的事务日志
      */
     private List<EditLog> doFetchEditsLog(long syncedTxId) {
-        logger.debug("last synced txId is " + syncedTxId);
+        logger.debug("last synced txId is {}", syncedTxId);
 
         List<EditLog> fetchedEditsLog = new ArrayList<>();
         List<FlushedSegment> flushedSegments = fsNameSystem.getFlushedSegments();
 
-        logger.debug("flushed segments size is " + flushedSegments.size());
+        logger.debug("flushed segments size is {}", flushedSegments.size());
 
         // 优先判断是否已经刷写磁盘
         if (flushedSegments.size() == 0) {
@@ -223,7 +223,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
      * @param fetchedEditsLog 获取到的事务日志
      */
     private void fetchFromLocalBuffer(long syncedTxId, List<EditLog> fetchedEditsLog) {
-        logger.debug("current synced txId is {}, " + "local buffered editsLog max txId is {}, " + "fetch from local buffer", syncedTxId, localBufferedEditsLogMaxTxId);
+        logger.debug("current synced txId is {}, local buffered editsLog max txId is {}, fetch from local buffer",
+                syncedTxId, localBufferedEditsLogMaxTxId);
 
         int fetchCount = 0;
         for (EditLog editLog : this.localBufferedEditsLog) {
@@ -232,7 +233,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
                 syncedTxId = editLog.getTxId();
                 fetchCount++;
             } else if (editLog.getTxId() > syncedTxId + 1) {
-                logger.warn("current editLog txId [{}] > next synced txId [{}], txId interruption occurred", editLog.getTxId(), syncedTxId + 1);
+                logger.warn("current editLog txId {} > next synced txId {}, txId interruption occurred",
+                        editLog.getTxId(), syncedTxId + 1);
             }
 
             if (fetchCount == BACKUP_NODE_MAX_FETCH_SIZE) { // TODO 防御编程，大小还是备份节点上传，这里不能超过这个最大值
@@ -240,7 +242,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             }
         }
 
-        logger.debug("current synced txId is {}, " + "local buffered editsLog max txId is {}, " + "fetch {} editsLog from local buffer", syncedTxId, localBufferedEditsLogMaxTxId, fetchedEditsLog.size());
+        logger.debug("current synced txId is {}, local buffered editsLog max txId is {}, fetch {} editsLog from local buffer",
+                syncedTxId, localBufferedEditsLogMaxTxId, fetchedEditsLog.size());
     }
 
     /**
@@ -249,17 +252,19 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
      * @param syncedTxId 已同步的事务标识
      */
     private void fetchFromDoubleBuffer(long syncedTxId) {
-        logger.debug("current synced txId is {}, " + "local buffered editsLog max txId is {}, " + "fetch from double buffer", syncedTxId, localBufferedEditsLogMaxTxId);
+        logger.debug("current synced txId is {}, local buffered editsLog max txId is {}, fetch from double buffer",
+                syncedTxId, localBufferedEditsLogMaxTxId);
 
         cleanCache();
 
         this.localBufferedEditsLog.addAll(this.fsNameSystem.getEditsLogFromDoubleBuffer());
-        EditLog lastEditLog = this.localBufferedEditsLog.getLast();
-        if (lastEditLog != null) {
-            this.localBufferedEditsLogMaxTxId = lastEditLog.getTxId();
+
+        if (this.localBufferedEditsLog.size() > 0) {
+            this.localBufferedEditsLogMaxTxId = this.localBufferedEditsLog.getLast().getTxId();
         }
 
-        logger.debug("current synced txId is {}, " + "local buffered editsLog max txId is {}, " + "fetch {} editsLog from double buffer", syncedTxId, localBufferedEditsLogMaxTxId, localBufferedEditsLog.size());
+        logger.debug("current synced txId is {}, local buffered editsLog max txId is {}, fetch {} editsLog from double buffer",
+                syncedTxId, localBufferedEditsLogMaxTxId, localBufferedEditsLog.size());
     }
 
     /**
@@ -274,7 +279,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             // 磁盘文件被缓存过
             // 在 local buffer 中存在
             if (existInFlushedFile(syncedTxId, this.localBufferedFlushedSegment)) {
-                logger.debug("local buffered flushed segment is {}," + " current synced txId is {}," + " exist in flushed file buffer", this.localBufferedFlushedSegment, syncedTxId);
+                logger.debug("local buffered flushed segment is {}, current synced txId is {}, exist in flushed file buffer",
+                        this.localBufferedFlushedSegment, syncedTxId);
                 fetchFromLocalBuffer(syncedTxId, fetchedEditsLog);
                 return;
             }
@@ -282,7 +288,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             FlushedSegment nextFlushedSegment = getNextFlushedSegment(this.localBufferedFlushedSegment, flushedSegments);
             // 如果可以找到下一个磁盘文件，那么就从下一个磁盘文件里开始读取数据
             if (nextFlushedSegment != null) {
-                logger.debug("next flushed file segment is {}, " + "current synced txId is {}, " + "exist in next flushed file", nextFlushedSegment, syncedTxId);
+                logger.debug("next flushed file segment is {}, current synced txId is {}, exist in next flushed file",
+                        nextFlushedSegment, syncedTxId);
                 fetchFromFlushedFile(syncedTxId, nextFlushedSegment);
                 fetchFromLocalBuffer(syncedTxId, fetchedEditsLog);
             } else {
@@ -295,7 +302,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             logger.debug("not exit in local buffered flushed txId, fetch it from all flushed files");
             for (FlushedSegment flushedSegment : flushedSegments) {
                 if (existInFlushedFile(syncedTxId, flushedSegment)) {
-                    logger.debug("accepted flushed file segment is {}," + " current synced txId is {}," + " exist in flushed file", flushedSegment, syncedTxId);
+                    logger.debug("accepted flushed file segment is {}, current synced txId is {}, exist in flushed file",
+                            flushedSegment, syncedTxId);
                     fetchFromFlushedFile(syncedTxId, flushedSegment);
                     fetchFromLocalBuffer(syncedTxId, fetchedEditsLog);
                     return;
@@ -315,7 +323,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
      * @param flushedSegment 已刷盘事务日志文件的事务日志分段
      */
     private void fetchFromFlushedFile(long syncedTxId, FlushedSegment flushedSegment) {
-        logger.debug("current synced txId is {}, " + "local buffered editsLog max txId is {}, " + "fetch from flushed file segment is {}", syncedTxId, localBufferedEditsLogMaxTxId, flushedSegment);
+        logger.debug("current synced txId is {}, local buffered editsLog max txId is {}, fetch from flushed file segment is {}",
+                syncedTxId, localBufferedEditsLogMaxTxId, flushedSegment);
 
         cleanCache();
 
@@ -327,7 +336,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
 
         this.localBufferedFlushedSegment = flushedSegment; // 当前磁盘文件数据已经被缓存
 
-        logger.debug("current synced txId is {}, " + "local buffered editsLog max txId is {}, " + "fetch {} editsLog from flushed file segment is {}", syncedTxId, localBufferedEditsLogMaxTxId, localBufferedEditsLog.size(), flushedSegment);
+        logger.debug("current synced txId is {}, local buffered editsLog max txId is {}, fetch {} editsLog from flushed file segment is {}",
+                syncedTxId, localBufferedEditsLogMaxTxId, localBufferedEditsLog.size(), flushedSegment);
 
     }
 

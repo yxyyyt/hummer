@@ -1,6 +1,5 @@
 package com.sciatta.hummer.backupnode.fs;
 
-import com.sciatta.hummer.core.fs.FSNameSystem;
 import com.sciatta.hummer.core.fs.directory.FSImage;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.util.PathUtils;

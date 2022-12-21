@@ -1,6 +1,7 @@
 package com.sciatta.hummer.core.fs.editlog;
 
 import com.sciatta.hummer.core.exception.HummerException;
+import com.sciatta.hummer.core.fs.FSNameSystem;
 import com.sciatta.hummer.core.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,20 +50,16 @@ public class FSEditLog {
     private final ThreadLocal<Long> localTxId = ThreadLocal.withInitial(() -> 0L);
 
     /**
-     * 磁盘同步最大内存缓存大小，单位：字节
-     */
-    private final int editsLogBufferLimit;
-
-    /**
      * 缓存已同步到磁盘的事务日志分段
      */
     private final List<FlushedSegment> flushedSegments = new CopyOnWriteArrayList<>();
 
+    private final FSNameSystem fsNameSystem;
     private final Server server;
 
-    public FSEditLog(Server server, int editsLogBufferLimit, String editsLogPath) {
-        this.editsLogBufferLimit = editsLogBufferLimit;
-        this.doubleBuffer = new DoubleBuffer(editsLogBufferLimit, editsLogPath);
+    public FSEditLog(Server server, FSNameSystem fsNameSystem) {
+        this.fsNameSystem = fsNameSystem;
+        this.doubleBuffer = new DoubleBuffer(this.fsNameSystem);
         this.server = server;
     }
 
@@ -154,7 +151,8 @@ public class FSEditLog {
             // 如果频繁等待同步缓存，说明写入缓存速度远大于刷写磁盘速度，此时需要提高双缓存大小
             while (myTxId > syncTxId && isSyncRunning) {
                 try {
-                    logger.debug("waiting for sync finish, may be need to increase double buffer size [{}]!", editsLogBufferLimit);
+                    logger.debug("waiting for sync finish, may be need to increase double buffer size {}!",
+                            this.fsNameSystem.getEditsLogBufferLimit());
                     wait(1000);
                 } catch (InterruptedException e) {
                     logger.error("{} exception while waiting for sync", e.getMessage());

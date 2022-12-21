@@ -1,6 +1,6 @@
 package com.sciatta.hummer.namenode.rpc;
 
-import com.sciatta.hummer.core.fs.FSNameSystem;
+import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.namenode.datanode.DataNodeManager;
 import io.grpc.ServerBuilder;

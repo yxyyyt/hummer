@@ -1,5 +1,6 @@
 package com.sciatta.hummer.core.fs.editlog;
 
+import com.sciatta.hummer.core.fs.FSNameSystem;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.core.util.PathUtils;
 import com.sciatta.hummer.core.util.StringUtils;
@@ -37,19 +38,10 @@ public class DoubleBuffer {
      */
     private long lastFlushedTxId = 0L;
 
-    /**
-     * 磁盘同步最大内存缓存大小，单位：字节
-     */
-    private final int editsLogBufferLimit;
+    private final FSNameSystem fsNameSystem;
 
-    /**
-     * 事务日志持久化路径
-     */
-    private final String editsLogPath;
-
-    public DoubleBuffer(int editsLogBufferLimit, String editsLogPath) {
-        this.editsLogBufferLimit = editsLogBufferLimit;
-        this.editsLogPath = editsLogPath;
+    public DoubleBuffer(FSNameSystem fsNameSystem) {
+        this.fsNameSystem = fsNameSystem;
     }
 
     /**
@@ -82,8 +74,8 @@ public class DoubleBuffer {
      * @return true，需要刷写磁盘；否则，不需要刷写磁盘
      */
     public boolean shouldSyncToDisk() {
-        if (currentBuffer.size() >= this.editsLogBufferLimit) {
-            logger.debug("current buffer[{}] >= EDIT_LOG_BUFFER_LIMIT[{}]", currentBuffer.size(), this.editsLogBufferLimit);
+        if (currentBuffer.size() >= this.fsNameSystem.getEditsLogBufferLimit()) {
+            logger.debug("current buffer[{}] >= EDIT_LOG_BUFFER_LIMIT[{}]", currentBuffer.size(), this.fsNameSystem.getEditsLogBufferLimit());
             return true;
         }
         return false;
@@ -132,7 +124,7 @@ public class DoubleBuffer {
         private final ByteArrayOutputStream buffer;
 
         public EditLogBuffer() {
-            buffer = new ByteArrayOutputStream(editsLogBufferLimit * 2);
+            buffer = new ByteArrayOutputStream(fsNameSystem.getEditsLogBufferLimit() * 2);
         }
 
         /**
@@ -167,7 +159,8 @@ public class DoubleBuffer {
                 return;
             }
 
-            Path editsLogFile = PathUtils.getEditsLogFile(editsLogPath, ++lastFlushedTxId, latestWriteTxId);
+            Path editsLogFile = PathUtils.getEditsLogFile(fsNameSystem.getEditsLogPath(),
+                    ++lastFlushedTxId, latestWriteTxId);
             logger.debug("sync disk path is " + editsLogFile.toFile().getPath());
 
             boolean flushFinish = false;

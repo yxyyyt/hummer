@@ -1,6 +1,6 @@
 package com.sciatta.hummer.namenode.rpc;
 
-import com.sciatta.hummer.core.fs.FSNameSystem;
+import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
 import com.sciatta.hummer.core.server.Server;

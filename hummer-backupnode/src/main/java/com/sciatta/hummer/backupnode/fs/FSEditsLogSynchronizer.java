@@ -1,7 +1,6 @@
 package com.sciatta.hummer.backupnode.fs;
 
 import com.sciatta.hummer.backupnode.rpc.NameNodeRpcClient;
-import com.sciatta.hummer.core.fs.FSNameSystem;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.server.Server;
 import org.slf4j.Logger;

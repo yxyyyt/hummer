@@ -1,5 +1,6 @@
 package com.sciatta.hummer.core.runtime;
 
+import com.sciatta.hummer.core.fs.FSNameSystem;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.core.util.PathUtils;
 import org.slf4j.Logger;
@@ -30,13 +31,10 @@ public class RuntimeRepository {
      */
     private final ConcurrentMap<String, Object> repository = new ConcurrentHashMap<>();
 
-    /**
-     * 持久化路径
-     */
-    private final String persistPath;
+    private final FSNameSystem fsNameSystem;
 
-    public RuntimeRepository(String persistPath) {
-        this.persistPath = persistPath;
+    public RuntimeRepository(FSNameSystem fsNameSystem) {
+        this.fsNameSystem = fsNameSystem;
     }
 
     /**
@@ -45,7 +43,7 @@ public class RuntimeRepository {
      * @throws IOException IO异常
      */
     public void save() throws IOException {
-        Path path = PathUtils.getRuntimeRepositoryFile(this.persistPath);
+        Path path = PathUtils.getRuntimeRepositoryFile(this.fsNameSystem.getRuntimeRepositoryPath());
 
         try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
             fileChannel.write(ByteBuffer.wrap(GsonUtils.toJson(repository).getBytes()));
@@ -64,7 +62,7 @@ public class RuntimeRepository {
      */
     @SuppressWarnings("unchecked")
     public void restore() throws IOException {
-        Path path = PathUtils.getRuntimeRepositoryFile(this.persistPath);
+        Path path = PathUtils.getRuntimeRepositoryFile(this.fsNameSystem.getRuntimeRepositoryPath());
 
         if (!Files.exists(path)) {
             logger.debug("not exists {}, runtime repository does not need to be restored", path.toFile().getPath());

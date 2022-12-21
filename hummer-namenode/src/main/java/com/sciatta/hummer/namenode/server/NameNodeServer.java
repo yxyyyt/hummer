@@ -1,6 +1,5 @@
 package com.sciatta.hummer.namenode.server;
 
-import com.sciatta.hummer.core.fs.FSNameSystem;
 import com.sciatta.hummer.core.fs.directory.INode;
 import com.sciatta.hummer.core.fs.directory.INodeDirectory;
 import com.sciatta.hummer.core.fs.directory.INodeFile;
@@ -11,13 +10,10 @@ import com.sciatta.hummer.core.server.AbstractServer;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.namenode.datanode.DataNodeManager;
 import com.sciatta.hummer.namenode.fs.FSImageUploadServer;
+import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.namenode.rpc.NameNodeRpcServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-
-import static com.sciatta.hummer.namenode.config.NameNodeConfig.*;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -25,20 +21,13 @@ import static com.sciatta.hummer.namenode.config.NameNodeConfig.*;
  * 元数据节点服务
  */
 public class NameNodeServer extends AbstractServer {
-
-    private static final Logger logger = LoggerFactory.getLogger(NameNodeServer.class);
-
     private final FSNameSystem fsNameSystem;
     private final DataNodeManager dataNodeManager;
     private final NameNodeRpcServer nameNodeRpcServer;
     private final FSImageUploadServer fsImageUploadServer;
 
     public NameNodeServer() {
-        this.fsNameSystem = new FSNameSystem(this,
-                EDITS_LOG_BUFFER_LIMIT,
-                EDITS_LOG_PATH,
-                RUNTIME_REPOSITORY_PATH
-        );
+        this.fsNameSystem = new FSNameSystem(this);
         this.dataNodeManager = new DataNodeManager(this);
         this.nameNodeRpcServer = new NameNodeRpcServer(fsNameSystem, dataNodeManager, this);
         this.fsImageUploadServer = new FSImageUploadServer(fsNameSystem, this);

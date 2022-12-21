@@ -3,7 +3,7 @@ package com.sciatta.hummer.backupnode.server;
 import com.sciatta.hummer.backupnode.fs.FSEditsLogSynchronizer;
 import com.sciatta.hummer.backupnode.fs.FSImageCheckPointer;
 import com.sciatta.hummer.backupnode.rpc.NameNodeRpcClient;
-import com.sciatta.hummer.core.fs.FSNameSystem;
+import com.sciatta.hummer.backupnode.fs.FSNameSystem;
 import com.sciatta.hummer.core.fs.directory.INode;
 import com.sciatta.hummer.core.fs.directory.INodeDirectory;
 import com.sciatta.hummer.core.fs.directory.INodeFile;
@@ -34,7 +34,7 @@ public class BackupNodeServer extends AbstractServer {
     public BackupNodeServer() {
         NameNodeRpcClient nameNodeRpcClient = new NameNodeRpcClient();
 
-        this.fsNameSystem = new FSNameSystem(this, EDITS_LOG_BUFFER_LIMIT, EDITS_LOG_PATH, RUNTIME_REPOSITORY_PATH);
+        this.fsNameSystem = new FSNameSystem(this);
         this.fsEditsLogSynchronizer = new FSEditsLogSynchronizer(nameNodeRpcClient, fsNameSystem, this);
         this.fsImageCheckPointer = new FSImageCheckPointer(fsNameSystem, this);
 

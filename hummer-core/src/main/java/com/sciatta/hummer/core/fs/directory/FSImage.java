@@ -17,7 +17,7 @@ public class FSImage {
     private long timestamp;
 
     /**
-     * 目录树
+     * 目录树JSON串
      */
     private String directory;
 

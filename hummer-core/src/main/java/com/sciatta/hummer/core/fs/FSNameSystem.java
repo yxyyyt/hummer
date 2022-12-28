@@ -2,18 +2,26 @@ package com.sciatta.hummer.core.fs;
 
 import com.sciatta.hummer.core.exception.HummerException;
 import com.sciatta.hummer.core.fs.directory.FSDirectory;
+import com.sciatta.hummer.core.fs.directory.FSImage;
+import com.sciatta.hummer.core.fs.directory.INodeDirectory;
 import com.sciatta.hummer.core.fs.directory.replay.MkdirReplayHandler;
 import com.sciatta.hummer.core.fs.directory.replay.ReplayHandler;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FSEditLog;
 import com.sciatta.hummer.core.runtime.RuntimeRepository;
 import com.sciatta.hummer.core.server.Server;
+import com.sciatta.hummer.core.util.GsonUtils;
+import com.sciatta.hummer.core.util.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -49,16 +57,16 @@ public abstract class FSNameSystem {
      * 恢复文件系统元数据
      */
     public void restore() {
-        // 运行时仓库恢复数据
         try {
+            // 运行时仓库恢复数据
             this.runtimeRepository.restore();
+
+            // 恢复内存中的文件目录树
+            restoreFSDirectory();
         } catch (IOException e) {
             logger.error("{} while name system restore", e.getMessage());
             throw new HummerException(e);
         }
-
-        // 恢复内存中的文件目录树
-        restoreFSDirectory();
     }
 
     /**
@@ -103,9 +111,69 @@ public abstract class FSNameSystem {
     /**
      * 恢复内存中的文件目录树
      */
-    private void restoreFSDirectory() {
-        // 优先恢复镜像，然后重放事务日志
+    private void restoreFSDirectory() throws IOException {
+        // 加载镜像
+        FSImage fsImage = loadFSImage();
+        if (fsImage != null) {
+            this.fsDirectory.setDirTree(GsonUtils.fromJson(fsImage.getDirectory(), INodeDirectory.class));
+            this.fsDirectory.setMaxTxId(fsImage.getMaxTxId());
+            logger.debug("load fsImage success, maxTxId is {}, timestamp is {}",
+                    fsImage.getMaxTxId(), fsImage.getTimestamp());
+        } else {
+            logger.debug("no fsImage to load");
+        }
+
+        // 加载事务日志并重放
+        if (fsImage != null) {
+            loadEditsLogAndReplay(fsImage.getMaxTxId());
+        } else {
+            loadEditsLogAndReplay(0);
+        }
     }
+
+    /**
+     * 加载事务日志并重放
+     *
+     * @param fsImageMaxTxId 镜像的最大事务标识
+     * @throws IOException IO异常
+     */
+    private void loadEditsLogAndReplay(long fsImageMaxTxId) throws IOException {
+        List<Path> editsLogFiles = Files.list(PathUtils.getPathAndCreateDirectoryIfNotExists(getEditsLogPath()))
+                .filter(PathUtils::isValidEditsLogFile)
+                .filter(
+                        path -> fsImageMaxTxId < Objects.requireNonNull(PathUtils.getFlushedSegmentFromEditsLogFile(path)).getMaxTxId()
+                )
+                .sorted((p1, p2) -> (int) (Objects.requireNonNull(PathUtils.getFlushedSegmentFromEditsLogFile(p1)).getMaxTxId() -
+                        Objects.requireNonNull(PathUtils.getFlushedSegmentFromEditsLogFile(p2)).getMaxTxId()))
+                .collect(Collectors.toList());
+
+        if (editsLogFiles.size() == 0) {
+            logger.debug("no editsLog to load");
+            return;
+        }
+
+        long sequenceTxId = fsImageMaxTxId;
+        for (Path editLogFile : editsLogFiles) {
+            List<String> editsLog = Files.readAllLines(editLogFile);
+            int replayCount = 0;
+            for (String log : editsLog) {
+                EditLog editLog = GsonUtils.fromJson(log, EditLog.class);
+                if (editLog.getTxId() == sequenceTxId + 1) {    // 按序恢复 TODO，肯定有序？
+                    this.replay(editLog);
+                    replayCount++;
+                    sequenceTxId = editLog.getTxId();
+                }
+            }
+            logger.debug("load from {}, include {} editsLog to replay", editLogFile, replayCount);
+        }
+    }
+
+    /**
+     * 加载镜像
+     *
+     * @return 镜像；若不存，则返回null
+     */
+    protected abstract FSImage loadFSImage();
 
     /**
      * 获取磁盘同步最大内存缓存大小，单位：字节

@@ -1,5 +1,6 @@
 package com.sciatta.hummer.core.runtime;
 
+import com.google.gson.reflect.TypeToken;
 import com.sciatta.hummer.core.fs.FSNameSystem;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.core.util.PathUtils;
@@ -70,7 +71,8 @@ public class RuntimeRepository {
         }
 
         byte[] bytes = Files.readAllBytes(path);
-        repository.putAll(GsonUtils.fromJson(new String(bytes, 0, bytes.length), ConcurrentMap.class));
+        repository.putAll(GsonUtils.fromJson(new String(bytes, 0, bytes.length), new TypeToken<Map<String, Object>>() {
+        }.getType()));
         logger.debug("runtime repository restore repository from {}", path.toFile().getPath());
     }
 

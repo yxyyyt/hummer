@@ -26,12 +26,12 @@ public class DoubleBuffer {
     /**
      * 内存写入缓存
      */
-    private EditLogBuffer currentBuffer = new EditLogBuffer();
+    private EditLogBuffer currentBuffer;
 
     /**
      * 磁盘同步缓存
      */
-    private EditLogBuffer syncBuffer = new EditLogBuffer();
+    private EditLogBuffer syncBuffer;
 
     /**
      * 上一次刷写磁盘事务标识
@@ -42,6 +42,8 @@ public class DoubleBuffer {
 
     public DoubleBuffer(FSNameSystem fsNameSystem) {
         this.fsNameSystem = fsNameSystem;
+        this.currentBuffer = new EditLogBuffer();
+        this.syncBuffer = new EditLogBuffer();
     }
 
     /**

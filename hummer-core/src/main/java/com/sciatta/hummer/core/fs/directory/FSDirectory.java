@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class FSDirectory {
 
-    private final INodeDirectory dirTree;
+    private INodeDirectory dirTree;
 
     /**
      * 当前目录树对应的最大事务标识
@@ -32,8 +32,16 @@ public class FSDirectory {
         return maxTxId;
     }
 
+    public void setMaxTxId(long maxTxId) {
+        this.maxTxId = maxTxId;
+    }
+
     public INodeDirectory getDirTree() {
         return dirTree;
+    }
+
+    public void setDirTree(INodeDirectory dirTree) {
+        this.dirTree = dirTree;
     }
 
     /**

@@ -70,7 +70,7 @@ public class FSImageCheckPointer extends Thread {
      */
     private boolean beforeCheckPoint() {
         try {
-            Path checkPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
+            Path checkPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                     false);
@@ -81,7 +81,7 @@ public class FSImageCheckPointer extends Thread {
                 return true;
             }
 
-            Path lastCheckPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
+            Path lastCheckPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                     true);
@@ -133,7 +133,7 @@ public class FSImageCheckPointer extends Thread {
         FileChannel fileChannel = null;
 
         try {
-            Path checkPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
+            Path checkPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
                     fsImage.getMaxTxId(), fsImage.getTimestamp(), false);
 
             fileChannel = FileChannel.open(checkPointFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
@@ -177,7 +177,7 @@ public class FSImageCheckPointer extends Thread {
     private boolean afterCheckPoint(FSImage fsImage) {
         try {
             // 若存在临时镜像文件，则删除
-            Path lastCheckPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
+            Path lastCheckPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                     true);

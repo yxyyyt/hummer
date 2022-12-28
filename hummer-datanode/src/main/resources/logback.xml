@@ -113,7 +113,7 @@
 
     <!-- level可选值：ALL < TRACE < DEBUG < INFO < WARN < ERROR < OFF -->
     <!-- 不设置additivity属性，或者设置additivity = true的logger，继承root的appender，不继承level -->
-    <logger name="com.sciatta.hummer.datanode" level="${logLevel}" additivity="true">
+    <logger name="com.sciatta.hummer" level="${logLevel}" additivity="true">
         <!-- 表示按照debugAppender的设置去打印日志 -->
         <appender-ref ref="debugAppender"/>
         <!-- 表示按照infoAppender的设置去打印日志 -->

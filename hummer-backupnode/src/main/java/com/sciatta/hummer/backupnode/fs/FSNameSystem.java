@@ -2,8 +2,17 @@ package com.sciatta.hummer.backupnode.fs;
 
 import com.sciatta.hummer.core.fs.directory.FSImage;
 import com.sciatta.hummer.core.server.Server;
+import com.sciatta.hummer.core.util.PathUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.*;
+import static com.sciatta.hummer.backupnode.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
+import static com.sciatta.hummer.backupnode.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
 
 /**
  * Created by Rain on 2022/12/21<br>
@@ -11,6 +20,8 @@ import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.*;
  * 元数据管理
  */
 public class FSNameSystem extends com.sciatta.hummer.core.fs.FSNameSystem {
+    private final static Logger logger = LoggerFactory.getLogger(FSNameSystem.class);
+
     public FSNameSystem(Server server) {
         super(server);
     }
@@ -47,5 +58,26 @@ public class FSNameSystem extends com.sciatta.hummer.core.fs.FSNameSystem {
      */
     public long getSyncedTxId() {
         return this.fsDirectory.getMaxTxId();
+    }
+
+    @Override
+    protected FSImage loadFSImage() {
+        FSImage fsImage = null;
+        Path file = null;
+
+        try {
+            long maxTxId = runtimeRepository.getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0);
+            long timestamp = runtimeRepository.getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0);
+
+            file = PathUtils.getFSImageFile(CHECKPOINT_PATH, maxTxId, timestamp, false);
+            byte[] allBytes = Files.readAllBytes(file);
+
+            fsImage = new FSImage(maxTxId, new String(allBytes, 0, allBytes.length));
+            logger.debug("load fsImage from {}", file);
+        } catch (IOException e) {
+            logger.error("{} while load fsImage from {}", e.getMessage(), file);
+        }
+
+        return fsImage;
     }
 }

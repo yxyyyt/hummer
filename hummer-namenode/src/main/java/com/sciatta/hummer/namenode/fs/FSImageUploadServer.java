@@ -223,7 +223,7 @@ public class FSImageUploadServer extends Thread {
             return false;
         }
 
-        Path checkPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
+        Path checkPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                 false);
@@ -234,7 +234,7 @@ public class FSImageUploadServer extends Thread {
             return true;
         }
 
-        Path lastCheckPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
+        Path lastCheckPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                 true);
@@ -417,7 +417,7 @@ public class FSImageUploadServer extends Thread {
         FileChannel fileChannel = null;
 
         try {
-            Path checkPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
+            Path checkPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
                     cachedFSImage.checkPointMaxTxId, cachedFSImage.checkPointTimestamp, false);
 
             fileChannel = FileChannel.open(checkPointFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
@@ -445,7 +445,7 @@ public class FSImageUploadServer extends Thread {
      */
     private void afterWriteFsImage() throws IOException {
         // 若存在临时镜像文件，则删除
-        Path lastCheckPointFile = PathUtils.getCheckPointFile(CHECKPOINT_PATH,
+        Path lastCheckPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                 true);

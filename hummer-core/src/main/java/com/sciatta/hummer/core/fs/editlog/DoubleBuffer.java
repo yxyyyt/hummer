@@ -1,6 +1,6 @@
 package com.sciatta.hummer.core.fs.editlog;
 
-import com.sciatta.hummer.core.fs.FSNameSystem;
+import com.sciatta.hummer.core.fs.AbstractFSNameSystem;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.core.util.PathUtils;
 import com.sciatta.hummer.core.util.StringUtils;
@@ -14,6 +14,9 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+
+import static com.sciatta.hummer.core.runtime.RuntimeParameter.FLUSHED_END_TX_ID;
+import static com.sciatta.hummer.core.runtime.RuntimeParameter.FLUSHED_START_TX_ID;
 
 /**
  * Created by Rain on 2022/12/14<br>
@@ -38,12 +41,14 @@ public class DoubleBuffer {
      */
     private long lastFlushedTxId = 0L;
 
-    private final FSNameSystem fsNameSystem;
+    private final AbstractFSNameSystem fsNameSystem;
 
-    public DoubleBuffer(FSNameSystem fsNameSystem) {
+    public DoubleBuffer(AbstractFSNameSystem fsNameSystem) {
         this.fsNameSystem = fsNameSystem;
         this.currentBuffer = new EditLogBuffer();
         this.syncBuffer = new EditLogBuffer();
+
+        this.lastFlushedTxId = fsNameSystem.getRuntimeRepository().getLongParameter(FLUSHED_START_TX_ID, 0);
     }
 
     /**
@@ -127,6 +132,8 @@ public class DoubleBuffer {
 
         public EditLogBuffer() {
             buffer = new ByteArrayOutputStream(fsNameSystem.getEditsLogBufferLimit() * 2);
+            this.latestWriteTxId =
+                    fsNameSystem.getRuntimeRepository().getLongParameter(FLUSHED_END_TX_ID, 0);
         }
 
         /**
@@ -176,6 +183,9 @@ public class DoubleBuffer {
                 if (flushFinish) {
                     flushedSegments.add(new FlushedSegment(lastFlushedTxId, latestWriteTxId));
                     lastFlushedTxId = latestWriteTxId;
+
+                    fsNameSystem.getRuntimeRepository().setParameter(FLUSHED_START_TX_ID, lastFlushedTxId);
+                    fsNameSystem.getRuntimeRepository().setParameter(FLUSHED_END_TX_ID, latestWriteTxId);
                 }
             }
         }

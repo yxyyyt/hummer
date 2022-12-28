@@ -19,7 +19,8 @@ public interface ReplayHandler {
     /**
      * 重放事务日志
      *
-     * @param editLog 事务日志
+     * @param isLogEdit 是否记录事务日志；true，记录事务日志；否则，不需要记录事务日志。
+     * @param editLog   事务日志
      */
-    void replay(EditLog editLog);
+    void replay(EditLog editLog, boolean isLogEdit);
 }

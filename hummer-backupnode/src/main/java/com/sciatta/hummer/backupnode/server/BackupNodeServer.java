@@ -27,19 +27,19 @@ import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.*;
 public class BackupNodeServer extends AbstractServer {
     private static final Logger logger = LoggerFactory.getLogger(BackupNodeServer.class);
 
+    private final NameNodeRpcClient nameNodeRpcClient;
     private final FSNameSystem fsNameSystem;
     private final FSEditsLogSynchronizer fsEditsLogSynchronizer;
     private final FSImageCheckPointer fsImageCheckPointer;
 
     public BackupNodeServer() {
-        NameNodeRpcClient nameNodeRpcClient = new NameNodeRpcClient();
+        // 注册运行时类型
+        registerGsonRuntimeType();
 
+        this.nameNodeRpcClient = new NameNodeRpcClient();
         this.fsNameSystem = new FSNameSystem(this);
         this.fsEditsLogSynchronizer = new FSEditsLogSynchronizer(nameNodeRpcClient, fsNameSystem, this);
         this.fsImageCheckPointer = new FSImageCheckPointer(fsNameSystem, this);
-
-        // 注册运行时类型
-        registerGsonRuntimeType();
     }
 
     @Override

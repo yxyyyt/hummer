@@ -27,13 +27,13 @@ public class NameNodeServer extends AbstractServer {
     private final FSImageUploadServer fsImageUploadServer;
 
     public NameNodeServer() {
+        // 注册运行时类型
+        registerGsonRuntimeType();
+
         this.fsNameSystem = new FSNameSystem(this);
         this.dataNodeManager = new DataNodeManager(this);
         this.nameNodeRpcServer = new NameNodeRpcServer(fsNameSystem, dataNodeManager, this);
         this.fsImageUploadServer = new FSImageUploadServer(fsNameSystem, this);
-
-        // 注册运行时类型
-        registerGsonRuntimeType();
     }
 
     @Override

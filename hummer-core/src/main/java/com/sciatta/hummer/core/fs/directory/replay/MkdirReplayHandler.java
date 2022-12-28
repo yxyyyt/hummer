@@ -27,8 +27,10 @@ public class MkdirReplayHandler implements ReplayHandler {
     }
 
     @Override
-    public void replay(EditLog editLog) {
-        this.fsEditLog.logEdit(editLog);
+    public void replay(EditLog editLog, boolean isLogEdit) {
+        if (isLogEdit) {
+            this.fsEditLog.logEdit(editLog);
+        }
         this.fsDirectory.mkdir(editLog.getTxId(), ((MkDirOperation) editLog.getOperation()).getPath());
     }
 }

@@ -60,7 +60,7 @@ public class FSEditsLogSynchronizer extends Thread {
 
             for (EditLog editLog : editsLog) {
                 logger.debug("fetch editLog " + editLog);
-                fsNameSystem.replay(editLog); // 重放事务日志
+                fsNameSystem.replay(editLog, true); // 重放事务日志
             }
         }
     }

@@ -27,6 +27,12 @@ public class FSImage {
         this.timestamp = System.currentTimeMillis();
     }
 
+    public FSImage(long maxTxId, String directory, long timestamp) {
+        this.maxTxId = maxTxId;
+        this.timestamp = timestamp;
+        this.directory = directory;
+    }
+
     public long getMaxTxId() {
         return maxTxId;
     }

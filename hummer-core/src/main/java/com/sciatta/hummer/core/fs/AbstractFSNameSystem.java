@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
  * 元数据管理抽象实现
  */
-public abstract class FSNameSystem {
-    private static final Logger logger = LoggerFactory.getLogger(FSNameSystem.class);
+public abstract class AbstractFSNameSystem {
+    private static final Logger logger = LoggerFactory.getLogger(AbstractFSNameSystem.class);
 
     protected final FSDirectory fsDirectory;
     protected final FSEditLog fsEditLog;
@@ -40,8 +40,16 @@ public abstract class FSNameSystem {
      */
     private final List<ReplayHandler> registeredReplayHandlers = new ArrayList<>();
 
-    public FSNameSystem(Server server) {
+    public AbstractFSNameSystem(Server server) {
+        // 运行时仓库恢复数据
         this.runtimeRepository = new RuntimeRepository(this);
+        try {
+            this.runtimeRepository.restore();
+        } catch (IOException e) {
+            logger.error("{} while restore runtime repository", e.getMessage());
+            throw new HummerException(e);
+        }
+
         this.fsDirectory = new FSDirectory();
         this.fsEditLog = new FSEditLog(server, this);
 
@@ -58,9 +66,6 @@ public abstract class FSNameSystem {
      */
     public void restore() {
         try {
-            // 运行时仓库恢复数据
-            this.runtimeRepository.restore();
-
             // 恢复内存中的文件目录树
             restoreFSDirectory();
         } catch (IOException e) {
@@ -88,12 +93,13 @@ public abstract class FSNameSystem {
     /**
      * 重放事务日志
      *
-     * @param editLog 事务日志
+     * @param isLogEdit 是否记录事务日志；true，记录事务日志；否则，不需要记录事务日志。
+     * @param editLog   事务日志
      */
-    public void replay(EditLog editLog) {
+    public void replay(EditLog editLog, boolean isLogEdit) {
         for (ReplayHandler replay : registeredReplayHandlers) {
             if (replay.accept(editLog)) {
-                replay.replay(editLog);
+                replay.replay(editLog, isLogEdit);
                 return;
             }
         }
@@ -159,7 +165,7 @@ public abstract class FSNameSystem {
             for (String log : editsLog) {
                 EditLog editLog = GsonUtils.fromJson(log, EditLog.class);
                 if (editLog.getTxId() == sequenceTxId + 1) {    // 按序恢复 TODO，肯定有序？
-                    this.replay(editLog);
+                    this.replay(editLog, false);
                     replayCount++;
                     sequenceTxId = editLog.getTxId();
                 }

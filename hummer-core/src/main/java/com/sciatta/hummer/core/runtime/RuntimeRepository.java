@@ -1,7 +1,7 @@
 package com.sciatta.hummer.core.runtime;
 
 import com.google.gson.reflect.TypeToken;
-import com.sciatta.hummer.core.fs.FSNameSystem;
+import com.sciatta.hummer.core.fs.AbstractFSNameSystem;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.core.util.PathUtils;
 import org.slf4j.Logger;
@@ -32,9 +32,9 @@ public class RuntimeRepository {
      */
     private final ConcurrentMap<String, Object> repository = new ConcurrentHashMap<>();
 
-    private final FSNameSystem fsNameSystem;
+    private final AbstractFSNameSystem fsNameSystem;
 
-    public RuntimeRepository(FSNameSystem fsNameSystem) {
+    public RuntimeRepository(AbstractFSNameSystem fsNameSystem) {
         this.fsNameSystem = fsNameSystem;
     }
 
@@ -46,7 +46,8 @@ public class RuntimeRepository {
     public void save() throws IOException {
         Path path = PathUtils.getRuntimeRepositoryFile(this.fsNameSystem.getRuntimeRepositoryPath());
 
-        try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+        try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
             fileChannel.write(ByteBuffer.wrap(GsonUtils.toJson(repository).getBytes()));
             fileChannel.force(false);   // 强制刷写到磁盘
             logger.debug("runtime repository save repository to {}", path.toFile().getPath());
@@ -104,13 +105,7 @@ public class RuntimeRepository {
         return (double) repository.getOrDefault(name, defaultValue);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> List<T> getListParameter(String name, List<T> defaultValue) {
-        return Collections.unmodifiableList((List<T>) repository.getOrDefault(name, defaultValue));
-    }
-
-    @SuppressWarnings("unchecked")
-    public <K, V> Map<K, V> getMapParameter(String name, Map<K, V> defaultValue) {
-        return Collections.unmodifiableMap((Map<K, V>) repository.getOrDefault(name, defaultValue));
+    public String getJsonParameter(String name, String defaultValue) {
+        return (String) repository.getOrDefault(name, defaultValue);
     }
 }

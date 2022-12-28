@@ -15,8 +15,8 @@ import java.nio.file.StandardOpenOption;
 
 import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.CHECKPOINT_INTERVAL;
 import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.CHECKPOINT_PATH;
-import static com.sciatta.hummer.backupnode.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
-import static com.sciatta.hummer.backupnode.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
+import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
+import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
 
 /**
  * Created by Rain on 2022/10/23<br>

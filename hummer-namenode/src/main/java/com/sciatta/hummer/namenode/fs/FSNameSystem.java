@@ -1,7 +1,7 @@
 package com.sciatta.hummer.namenode.fs;
 
+import com.sciatta.hummer.core.fs.AbstractFSNameSystem;
 import com.sciatta.hummer.core.fs.directory.FSImage;
-import com.sciatta.hummer.core.fs.directory.INodeDirectory;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
 import com.sciatta.hummer.core.fs.editlog.operation.MkDirOperation;
@@ -20,16 +20,16 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
+import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
 import static com.sciatta.hummer.namenode.config.NameNodeConfig.*;
-import static com.sciatta.hummer.namenode.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
-import static com.sciatta.hummer.namenode.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
 
 /**
  * Created by Rain on 2022/12/21<br>
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
  * 元数据管理
  */
-public class FSNameSystem extends com.sciatta.hummer.core.fs.FSNameSystem {
+public class FSNameSystem extends AbstractFSNameSystem {
     private static final Logger logger = LoggerFactory.getLogger(FSNameSystem.class);
 
     public FSNameSystem(Server server) {
@@ -133,7 +133,7 @@ public class FSNameSystem extends com.sciatta.hummer.core.fs.FSNameSystem {
             file = PathUtils.getFSImageFile(CHECKPOINT_PATH, maxTxId, timestamp, false);
             byte[] allBytes = Files.readAllBytes(file);
 
-            fsImage = new FSImage(maxTxId, new String(allBytes, 0, allBytes.length));
+            fsImage = new FSImage(maxTxId, new String(allBytes, 0, allBytes.length), timestamp);
             logger.debug("load fsImage from {}", file);
         } catch (IOException e) {
             logger.error("{} while load fsImage from {}", e.getMessage(), file);

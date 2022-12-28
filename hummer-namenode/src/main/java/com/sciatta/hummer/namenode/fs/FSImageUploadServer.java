@@ -1,6 +1,6 @@
 package com.sciatta.hummer.namenode.fs;
 
-import com.sciatta.hummer.core.fs.FSNameSystem;
+import com.sciatta.hummer.core.fs.AbstractFSNameSystem;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.util.PathUtils;
 import org.slf4j.Logger;
@@ -15,10 +15,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 
+import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
+import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
 import static com.sciatta.hummer.namenode.config.NameNodeConfig.CHECKPOINT_PATH;
 import static com.sciatta.hummer.namenode.config.NameNodeConfig.NAME_NODE_IMAGE_UPLOAD_SERVER_PORT;
-import static com.sciatta.hummer.namenode.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
-import static com.sciatta.hummer.namenode.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
 
 /**
  * Created by Rain on 2022/10/25<br>
@@ -33,7 +33,7 @@ public class FSImageUploadServer extends Thread {
     private ServerSocketChannel serverSocketChannel;
 
     private final Server server;
-    private final FSNameSystem fsNameSystem;
+    private final AbstractFSNameSystem fsNameSystem;
 
     /**
      * 缓存检查点的最大事务标识
@@ -75,7 +75,7 @@ public class FSImageUploadServer extends Thread {
         }
     }
 
-    public FSImageUploadServer(FSNameSystem fsNameSystem, Server server) {
+    public FSImageUploadServer(AbstractFSNameSystem fsNameSystem, Server server) {
         this.fsNameSystem = fsNameSystem;
         this.server = server;
     }

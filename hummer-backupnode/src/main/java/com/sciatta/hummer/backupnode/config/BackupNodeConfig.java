@@ -59,5 +59,5 @@ public class BackupNodeConfig {
     /**
      * 检查点定时执行间隔
      */
-    public static final int CHECKPOINT_INTERVAL = 60 * 1000;
+    public static final int CHECKPOINT_INTERVAL = 15 * 1000;
 }

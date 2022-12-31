@@ -1,5 +1,13 @@
 package com.sciatta.hummer.core.server;
 
+import com.sciatta.hummer.core.fs.directory.INode;
+import com.sciatta.hummer.core.fs.directory.INodeDirectory;
+import com.sciatta.hummer.core.fs.directory.INodeFile;
+import com.sciatta.hummer.core.fs.editlog.operation.CreateFileOperation;
+import com.sciatta.hummer.core.fs.editlog.operation.DummyOperation;
+import com.sciatta.hummer.core.fs.editlog.operation.MkDirOperation;
+import com.sciatta.hummer.core.fs.editlog.operation.Operation;
+import com.sciatta.hummer.core.util.GsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,20 +52,31 @@ public abstract class AbstractServer implements Server {
      */
     private static final AtomicBoolean CLOSED = new AtomicBoolean(false);
 
+    public AbstractServer() {
+        // 注册运行时类型
+        registerGsonRuntimeType();
+    }
+
     @Override
     public final Server start() throws IOException {
-        // 只允许启动一次
-        if (!STARTING.compareAndSet(false, true)) {
-            return this;
+        try {
+            // 只允许启动一次
+            if (!STARTING.compareAndSet(false, true)) {
+                return this;
+            }
+
+            doStart();
+
+            registerShutdownHook();
+
+            STARTED.set(true);
+
+            logger.info("{} started", AbstractServer.this.getClass().getSimpleName());
+        } catch (Exception e) {
+            logger.error("{} while server starting...", e.getMessage());
+            close();
+            System.exit(1);
         }
-
-        doStart();
-
-        registerShutdownHook();
-
-        STARTED.set(true);
-
-        logger.info("{} started", AbstractServer.this.getClass().getSimpleName());
 
         return this;
     }
@@ -110,6 +129,16 @@ public abstract class AbstractServer implements Server {
             AbstractServer.this.close();
             logger.warn("*** {} shut down", AbstractServer.this.getClass().getSimpleName());
         }));
+    }
+
+    /**
+     * 注册运行时类型
+     */
+    @SuppressWarnings("unchecked")
+    private void registerGsonRuntimeType() {
+        GsonUtils.register(Operation.class, new Class[]{DummyOperation.class, MkDirOperation.class, CreateFileOperation.class});
+
+        GsonUtils.register(INode.class, new Class[]{INodeFile.class, INodeDirectory.class});
     }
 
     /**

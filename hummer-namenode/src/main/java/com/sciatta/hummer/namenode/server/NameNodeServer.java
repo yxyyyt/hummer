@@ -27,8 +27,7 @@ public class NameNodeServer extends AbstractServer {
     private final FSImageUploadServer fsImageUploadServer;
 
     public NameNodeServer() {
-        // 注册运行时类型
-        registerGsonRuntimeType();
+        super();
 
         this.fsNameSystem = new FSNameSystem(this);
         this.dataNodeManager = new DataNodeManager(this);
@@ -58,14 +57,5 @@ public class NameNodeServer extends AbstractServer {
 
         // 持久化文件系统元数据
         this.fsNameSystem.save();
-    }
-
-    /**
-     * 注册运行时类型
-     */
-    @SuppressWarnings("unchecked")
-    private void registerGsonRuntimeType() {
-        GsonUtils.register(Operation.class, new Class[]{DummyOperation.class, MkDirOperation.class});
-        GsonUtils.register(INode.class, new Class[]{INodeFile.class, INodeDirectory.class});
     }
 }

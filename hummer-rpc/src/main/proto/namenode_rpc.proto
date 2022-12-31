@@ -10,6 +10,7 @@ service NameNodeService {
   rpc Mkdir(MkdirRequest) returns (MkdirResponse);
   rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
   rpc FetchEditsLog(FetchEditsLogRequest) returns (FetchEditsLogResponse);
+  rpc CreateFile(CreateFileRequest) returns (CreateFileResponse);
 }
 
 // Register
@@ -54,4 +55,12 @@ message FetchEditsLogRequest{
 message FetchEditsLogResponse{
   string editsLog = 1;
   int32 status = 2;
+}
+
+// CreateFile
+message CreateFileRequest{
+  string fileName = 1;
+}
+message CreateFileResponse{
+  int32 status = 1;
 }

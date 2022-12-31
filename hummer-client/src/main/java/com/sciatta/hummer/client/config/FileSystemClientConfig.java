@@ -1,4 +1,4 @@
-package com.sciatta.hummer.client;
+package com.sciatta.hummer.client.config;
 
 /**
  * Created by Rain on 2022/12/13<br>

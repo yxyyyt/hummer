@@ -33,8 +33,7 @@ public class BackupNodeServer extends AbstractServer {
     private final FSImageCheckPointer fsImageCheckPointer;
 
     public BackupNodeServer() {
-        // 注册运行时类型
-        registerGsonRuntimeType();
+        super();
 
         this.nameNodeRpcClient = new NameNodeRpcClient();
         this.fsNameSystem = new FSNameSystem(this);
@@ -58,14 +57,5 @@ public class BackupNodeServer extends AbstractServer {
     protected void doClose() {
         // 持久化文件系统元数据
         this.fsNameSystem.save();
-    }
-
-    /**
-     * 注册运行时类型
-     */
-    @SuppressWarnings("unchecked")
-    private void registerGsonRuntimeType() {
-        GsonUtils.register(Operation.class, new Class[]{DummyOperation.class, MkDirOperation.class});
-        GsonUtils.register(INode.class, new Class[]{INodeFile.class, INodeDirectory.class});
     }
 }

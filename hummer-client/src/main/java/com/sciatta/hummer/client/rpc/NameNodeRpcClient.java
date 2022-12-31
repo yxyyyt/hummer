@@ -7,8 +7,8 @@ import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.sciatta.hummer.client.FileSystemClientConfig.NAME_NODE_RPC_HOST;
-import static com.sciatta.hummer.client.FileSystemClientConfig.NAME_NODE_RPC_PORT;
+import static com.sciatta.hummer.client.config.FileSystemClientConfig.NAME_NODE_RPC_HOST;
+import static com.sciatta.hummer.client.config.FileSystemClientConfig.NAME_NODE_RPC_PORT;
 
 /**
  * Created by Rain on 2022/12/16<br>
@@ -32,7 +32,6 @@ public class NameNodeRpcClient implements FileSystem {
     @Override
     public int mkdir(String path) {
         MkdirRequest request = MkdirRequest.newBuilder().setPath(path).build();
-
         MkdirResponse response = nameNodeServiceGrpc.mkdir(request);
 
         logger.debug("mkdir response status is " + response.getStatus());
@@ -41,9 +40,18 @@ public class NameNodeRpcClient implements FileSystem {
     }
 
     @Override
+    public int createFile(String fileName) {
+        CreateFileRequest request = CreateFileRequest.newBuilder().setFileName(fileName).build();
+        CreateFileResponse response = nameNodeServiceGrpc.createFile(request);
+
+        logger.debug("create file response status is " + response.getStatus());
+
+        return response.getStatus();
+    }
+
+    @Override
     public int shutdown() {
         ShutdownRequest request = ShutdownRequest.newBuilder().setCode(1).build();
-
         ShutdownResponse response = nameNodeServiceGrpc.shutdown(request);
 
         logger.debug("shutdown response status is " + response.getStatus());

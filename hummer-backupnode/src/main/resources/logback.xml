@@ -95,12 +95,29 @@
     </appender>
 
     <!-- 日志输出到文件 -->
-    <!-- 打印所有级别日志的设置 -->
+    <!-- 打印hummer所有级别日志的设置 -->
     <appender name="allAppender"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${logFilePath}/all.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${logFilePath}/all/all.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxHistory>${logMaxHistory}</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>${logMaxFileSize}</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${logPattern}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 日志输出到文件 -->
+    <!-- 打印所有级别日志的设置 -->
+    <appender name="mixedAppender"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logFilePath}/mixed.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${logFilePath}/mixed/mixed.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
             <maxHistory>${logMaxHistory}</maxHistory>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>${logMaxFileSize}</maxFileSize>
@@ -120,12 +137,14 @@
         <appender-ref ref="infoAppender"/>
         <!-- 表示按照errorAppender的设置去打印日志 -->
         <appender-ref ref="errorAppender"/>
+        <!-- 表示按照allAppender的设置去打印日志 -->
+        <appender-ref ref="allAppender"/>
     </logger>
 
     <!-- 包含所有大于等于指定级别的日志 -->
     <!-- root logger是所有logger的父级 -->
     <root level="${logLevel}">
-        <appender-ref ref="allAppender"/>
+        <appender-ref ref="mixedAppender"/>
         <appender-ref ref="console"/>
     </root>
 

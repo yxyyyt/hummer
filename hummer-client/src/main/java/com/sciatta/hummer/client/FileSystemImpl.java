@@ -20,6 +20,11 @@ public class FileSystemImpl implements FileSystem {
     }
 
     @Override
+    public int createFile(String fileName) {
+        return this.delegate.createFile(fileName);
+    }
+
+    @Override
     public int shutdown() {
         return this.delegate.shutdown();
     }

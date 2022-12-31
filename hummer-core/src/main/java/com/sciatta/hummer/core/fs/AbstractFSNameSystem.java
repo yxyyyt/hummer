@@ -4,6 +4,7 @@ import com.sciatta.hummer.core.exception.HummerException;
 import com.sciatta.hummer.core.fs.directory.FSDirectory;
 import com.sciatta.hummer.core.fs.directory.FSImage;
 import com.sciatta.hummer.core.fs.directory.INodeDirectory;
+import com.sciatta.hummer.core.fs.directory.replay.CreateFileReplayHandler;
 import com.sciatta.hummer.core.fs.directory.replay.MkdirReplayHandler;
 import com.sciatta.hummer.core.fs.directory.replay.ReplayHandler;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
@@ -103,8 +104,8 @@ public abstract class AbstractFSNameSystem {
                 return;
             }
         }
-        logger.error("not any registered replay handlers");
-        throw new HummerException("not any registered replay handlers");
+        logger.error("not any registered replay handler for editLog " + editLog);
+        throw new HummerException("not any registered replay handler for editLog " + editLog);
     }
 
     /**
@@ -112,6 +113,7 @@ public abstract class AbstractFSNameSystem {
      */
     private void registerReplayHandlers() {
         this.registeredReplayHandlers.add(new MkdirReplayHandler(this.fsDirectory, this.fsEditLog));
+        this.registeredReplayHandlers.add(new CreateFileReplayHandler(this.fsDirectory, this.fsEditLog));
     }
 
     /**
@@ -164,7 +166,7 @@ public abstract class AbstractFSNameSystem {
             int replayCount = 0;
             for (String log : editsLog) {
                 EditLog editLog = GsonUtils.fromJson(log, EditLog.class);
-                if (editLog.getTxId() == sequenceTxId + 1) {    // 按序恢复 TODO，肯定有序？
+                if (editLog.getTxId() >= sequenceTxId + 1) {    // 按序恢复，txId可能会中断
                     this.replay(editLog, false);
                     replayCount++;
                     sequenceTxId = editLog.getTxId();

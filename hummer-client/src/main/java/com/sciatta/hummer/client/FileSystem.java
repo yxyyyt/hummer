@@ -15,6 +15,14 @@ public interface FileSystem {
     int mkdir(String path);
 
     /**
+     * 创建文件
+     *
+     * @param fileName 文件名
+     * @return 创建文件响应
+     */
+    int createFile(String fileName);
+
+    /**
      * 优雅停机
      *
      * @return 停机是否成功

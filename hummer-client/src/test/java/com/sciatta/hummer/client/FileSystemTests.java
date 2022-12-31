@@ -23,6 +23,18 @@ public class FileSystemTests {
     }
 
     @Test
+    public void testCreateFile() {
+        FileSystem fileSystem = new FileSystemImpl();
+        fileSystem.mkdir("/hummer/init");
+
+        for (int i = 0; i < 10; i++) {
+            String fileName = "/hummer/init/" + (int) (Math.random() * 10) + ".test";
+            int ans = fileSystem.createFile(fileName);
+            System.out.println("[" + (i + 1) + "] create file " + fileName + " result is " + ans);
+        }
+    }
+
+    @Test
     public void testBatchMkdir() {
         int threadNum = 5;
         AtomicInteger id = new AtomicInteger();

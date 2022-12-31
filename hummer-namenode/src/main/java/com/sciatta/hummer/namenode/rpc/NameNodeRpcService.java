@@ -135,6 +135,29 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
     }
 
     @Override
+    public void createFile(CreateFileRequest request, StreamObserver<CreateFileResponse> responseObserver) {
+        CreateFileResponse response;
+
+        if (!server.isStarted() || server.isClosing()) {
+            response = CreateFileResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        boolean test = fsNameSystem.createFile(request.getFileName());
+
+        if (test) {
+            response = CreateFileResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+        } else {
+            response = CreateFileResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+        }
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
     public void fetchEditsLog(FetchEditsLogRequest request, StreamObserver<FetchEditsLogResponse> responseObserver) {
         FetchEditsLogResponse response;
 
@@ -228,13 +251,16 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
 
         int fetchCount = 0;
         for (EditLog editLog : this.localBufferedEditsLog) {
-            if (editLog.getTxId() == syncedTxId + 1) { // txId不可中断？
+            if (editLog.getTxId() >= syncedTxId + 1) { // txId可能会中断
+
+                if (editLog.getTxId() > syncedTxId + 1) {
+                    logger.warn("current editLog txId {} > next synced txId {}, txId interruption occurred",
+                            editLog.getTxId(), syncedTxId + 1);
+                }
+
                 fetchedEditsLog.add(editLog);
                 syncedTxId = editLog.getTxId();
                 fetchCount++;
-            } else if (editLog.getTxId() > syncedTxId + 1) {
-                logger.warn("current editLog txId {} > next synced txId {}, txId interruption occurred",
-                        editLog.getTxId(), syncedTxId + 1);
             }
 
             if (fetchCount == BACKUP_NODE_MAX_FETCH_SIZE) { // TODO 防御编程，大小还是备份节点上传，这里不能超过这个最大值

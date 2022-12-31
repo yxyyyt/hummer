@@ -11,14 +11,10 @@ import com.sciatta.hummer.core.fs.editlog.operation.OperationType;
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
  * 创建目录重放处理器
  */
-public class MkdirReplayHandler implements ReplayHandler {
-
-    private final FSDirectory fsDirectory;
-    private final FSEditLog fsEditLog;
+public class MkdirReplayHandler extends AbstractReplayHandler {
 
     public MkdirReplayHandler(FSDirectory fsDirectory, FSEditLog fsEditLog) {
-        this.fsDirectory = fsDirectory;
-        this.fsEditLog = fsEditLog;
+        super(fsDirectory, fsEditLog);
     }
 
     @Override
@@ -27,10 +23,8 @@ public class MkdirReplayHandler implements ReplayHandler {
     }
 
     @Override
-    public void replay(EditLog editLog, boolean isLogEdit) {
-        if (isLogEdit) {
-            this.fsEditLog.logEdit(editLog);
-        }
+    protected boolean doReplay(EditLog editLog) {
         this.fsDirectory.mkdir(editLog.getTxId(), ((MkDirOperation) editLog.getOperation()).getPath());
+        return true;
     }
 }

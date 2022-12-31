@@ -4,6 +4,7 @@ import com.sciatta.hummer.core.fs.AbstractFSNameSystem;
 import com.sciatta.hummer.core.fs.directory.FSImage;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
+import com.sciatta.hummer.core.fs.editlog.operation.CreateFileOperation;
 import com.sciatta.hummer.core.fs.editlog.operation.MkDirOperation;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.util.GsonUtils;
@@ -65,6 +66,20 @@ public class FSNameSystem extends AbstractFSNameSystem {
         this.fsDirectory.mkdir(editLog.getTxId(), path);
 
         return true;
+    }
+
+    /**
+     * 创建文件
+     *
+     * @param fileName 文件名
+     * @return 是否创建文件成功；true，创建成功；否则，创建失败
+     */
+    public boolean createFile(String fileName) {
+        EditLog editLog = new EditLog();
+        editLog.setOperation(new CreateFileOperation(fileName));
+
+        this.fsEditLog.logEdit(editLog);
+        return this.fsDirectory.createFile(editLog.getTxId(), fileName);
     }
 
     /**

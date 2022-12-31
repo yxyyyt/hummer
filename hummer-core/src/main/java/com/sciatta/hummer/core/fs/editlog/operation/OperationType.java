@@ -13,5 +13,9 @@ public enum OperationType {
     /**
      * 创建目录
      */
-    MKDIR;
+    MKDIR,
+    /**
+     * 创建文件
+     */
+    CREATE_FILE
 }

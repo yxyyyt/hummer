@@ -9,6 +9,10 @@ public class INodeFile implements INode {
 
     private String name;
 
+    public INodeFile(String name) {
+        this.name = name;
+    }
+
     public String getName() {
         return name;
     }

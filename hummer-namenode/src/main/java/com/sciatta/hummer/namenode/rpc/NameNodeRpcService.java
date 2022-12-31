@@ -1,11 +1,12 @@
 package com.sciatta.hummer.namenode.rpc;
 
+import com.sciatta.hummer.core.data.DataNodeInfo;
 import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.util.GsonUtils;
-import com.sciatta.hummer.namenode.datanode.DataNodeManager;
+import com.sciatta.hummer.namenode.data.DataNodeManager;
 import com.sciatta.hummer.rpc.*;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
@@ -171,6 +172,31 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         List<EditLog> editsLog = doFetchEditsLog(request.getSyncedTxId());
 
         response = FetchEditsLogResponse.newBuilder().setStatus(STATUS_SUCCESS).setEditsLog(GsonUtils.toJson(editsLog)).build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void allocateDataNodes(AllocateDataNodesRequest request, StreamObserver<AllocateDataNodesResponse> responseObserver) {
+        AllocateDataNodesResponse response;
+
+        if (!server.isStarted() || server.isClosing()) {
+            response = AllocateDataNodesResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        List<DataNodeInfo> dataNodes = this.dataNodeManager.allocateDataNodes(request.getFileSize());
+        if (dataNodes.size() > 0) {
+            response = AllocateDataNodesResponse.newBuilder()
+                    .setStatus(STATUS_SUCCESS)
+                    .setDataNodes(GsonUtils.toJson(dataNodes))
+                    .build();
+        } else {
+            response = AllocateDataNodesResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+        }
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

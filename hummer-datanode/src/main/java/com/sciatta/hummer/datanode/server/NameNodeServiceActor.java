@@ -17,7 +17,7 @@ public class NameNodeServiceActor {
     private static final Logger logger = LoggerFactory.getLogger(NameNodeServiceActor.class);
 
     private static final String LOCAL_IP = "localhost"; // TODO to config
-    private static final String LOCAL_HOST_NAME = "dfs-data-01";
+    private static final String LOCAL_HOST_NAME = "dfs-data-02";
 
     private final NameNodeServiceGrpc.NameNodeServiceBlockingStub nameNodeServiceGrpc;
 

@@ -8,24 +8,24 @@ import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
  * 文件系统客户端实现
  */
 public class FileSystemImpl implements FileSystem {
-    private final FileSystem delegate;
+    private final NameNodeRpcClient client;
 
     public FileSystemImpl() {
-        this.delegate = new NameNodeRpcClient();
+        this.client = new NameNodeRpcClient();
     }
 
     @Override
     public int mkdir(String path) {
-        return this.delegate.mkdir(path);
+        return this.client.mkdir(path);
     }
 
     @Override
     public int createFile(String fileName) {
-        return this.delegate.createFile(fileName);
+        return this.client.createFile(fileName);
     }
 
     @Override
     public int shutdown() {
-        return this.delegate.shutdown();
+        return this.client.shutdown();
     }
 }

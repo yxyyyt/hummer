@@ -1,13 +1,13 @@
-package com.sciatta.hummer.namenode.datanode;
+package com.sciatta.hummer.namenode.data;
 
+import com.sciatta.hummer.core.data.DataNodeInfo;
 import com.sciatta.hummer.core.server.Server;
+import com.sciatta.hummer.namenode.data.allocate.DataNodeAllocator;
+import com.sciatta.hummer.namenode.data.allocate.StoredDataSizeAllocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -21,15 +21,17 @@ public class DataNodeManager {
     /**
      * 数据节点缓存
      */
-    private final Map<String, DataNodeInfo> dataNodeCache = new ConcurrentHashMap<>();
+    private final Map<String, DataNodeInfo> aliveDataNodes = new ConcurrentHashMap<>();
 
     private final DataNodeAliveMonitor dataNodeAliveMonitor;
+    private final DataNodeAllocator dataNodeAllocator;
 
     private final Server server;
 
     public DataNodeManager(Server server) {
         // 启动数据节点存活状态检查监控线程
         this.dataNodeAliveMonitor = new DataNodeAliveMonitor();
+        this.dataNodeAllocator = new StoredDataSizeAllocator();
         this.server = server;
     }
 
@@ -46,7 +48,7 @@ public class DataNodeManager {
      */
     public boolean register(String ip, String hostname) {
         DataNodeInfo datanode = new DataNodeInfo(ip, hostname);
-        dataNodeCache.put(ip + "-" + hostname, datanode);   // TODO 数据节点唯一规则
+        aliveDataNodes.put(ip + "-" + hostname, datanode);   // TODO 数据节点唯一规则
         logger.debug("data node {}:{} register success", ip, hostname);
         return true;
     }
@@ -59,10 +61,24 @@ public class DataNodeManager {
      * @return 是否心跳成功；true，心跳成功；否则，心跳失败
      */
     public boolean heartbeat(String ip, String hostname) {
-        DataNodeInfo datanode = dataNodeCache.get(ip + "-" + hostname);
+        DataNodeInfo datanode = aliveDataNodes.get(ip + "-" + hostname);
         datanode.setLatestHeartbeatTime(System.currentTimeMillis());
         logger.debug("data node {}:{} heartbeat success", ip, hostname);
         return true;
+    }
+
+    /**
+     * 分配数据节点
+     *
+     * @param fileSize 数据文件大小
+     * @return 已成功分配的数据节点
+     */
+    public List<DataNodeInfo> allocateDataNodes(long fileSize) {
+        List<DataNodeInfo> dataNodes = this.dataNodeAllocator.allocateDataNodes(this.aliveDataNodes);
+
+        dataNodes.forEach(d -> d.addStoredDataSize(fileSize));
+
+        return Collections.unmodifiableList(dataNodes);
     }
 
     /**
@@ -76,7 +92,7 @@ public class DataNodeManager {
                 while (!server.isClosing()) {
                     List<String> toRemoveDataNodes = new ArrayList<>();
 
-                    Iterator<DataNodeInfo> dataNodeInfoIterator = dataNodeCache.values().iterator();
+                    Iterator<DataNodeInfo> dataNodeInfoIterator = aliveDataNodes.values().iterator();
                     DataNodeInfo datanode;
                     while (dataNodeInfoIterator.hasNext()) {
                         datanode = dataNodeInfoIterator.next();
@@ -87,7 +103,7 @@ public class DataNodeManager {
 
                     if (!toRemoveDataNodes.isEmpty()) {
                         for (String toRemoveDatanode : toRemoveDataNodes) {
-                            dataNodeCache.remove(toRemoveDatanode);
+                            aliveDataNodes.remove(toRemoveDatanode);
                         }
                     }
 

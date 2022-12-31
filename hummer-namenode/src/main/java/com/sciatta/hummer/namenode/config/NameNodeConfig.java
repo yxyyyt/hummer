@@ -45,4 +45,9 @@ public class NameNodeConfig {
      * 备份节点向元数据节点抓取事务日志一个批次的最大大小
      */
     public static final int BACKUP_NODE_MAX_FETCH_SIZE = 10;
+
+    /**
+     * 数据文件副本的数量
+     */
+    public static final int NUMBER_OF_REPLICATED = 2;
 }

@@ -78,7 +78,7 @@ public class FSNameSystem extends AbstractFSNameSystem {
         EditLog editLog = new EditLog();
         editLog.setOperation(new CreateFileOperation(fileName));
 
-        this.fsEditLog.logEdit(editLog);
+        this.fsEditLog.logEdit(editLog);    // TODO 如果先写日志，再创建元数据；如果创建元数据失败，可能会存在大量冗余日志，如何防范异常攻击？
         return this.fsDirectory.createFile(editLog.getTxId(), fileName);
     }
 

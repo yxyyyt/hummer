@@ -77,7 +77,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             return;
         }
 
-        boolean test = dataNodeManager.register(request.getIp(), request.getHostname());
+        boolean test = dataNodeManager.register(
+                request.getIp(), request.getHostname(), request.getFileUploadServerPort());
 
         if (test) {
             response = RegisterResponse.newBuilder().setStatus(STATUS_SUCCESS).build();

@@ -12,6 +12,11 @@ public class DataNodeInfo {
     private String ip;
 
     /**
+     * 文件上传服务端口
+     */
+    private int fileUploadServerPort;
+
+    /**
      * 主机名
      */
     private String hostname;
@@ -26,9 +31,10 @@ public class DataNodeInfo {
      */
     private long storedDataSize;
 
-    public DataNodeInfo(String ip, String hostname) {
+    public DataNodeInfo(String ip, String hostname, int fileUploadServerPort) {
         this.ip = ip;
         this.hostname = hostname;
+        this.fileUploadServerPort = fileUploadServerPort;
     }
 
     public String getIp() {
@@ -37,6 +43,14 @@ public class DataNodeInfo {
 
     public void setIp(String ip) {
         this.ip = ip;
+    }
+
+    public int getFileUploadServerPort() {
+        return fileUploadServerPort;
+    }
+
+    public void setFileUploadServerPort(int fileUploadServerPort) {
+        this.fileUploadServerPort = fileUploadServerPort;
     }
 
     public String getHostname() {
@@ -67,10 +81,15 @@ public class DataNodeInfo {
         this.storedDataSize += storedDataSize;
     }
 
+    public static String uniqueKey(String ip, String hostname) {
+        return ip + "-" + hostname;
+    }
+
     @Override
     public String toString() {
         return "DataNodeInfo{" +
                 "ip='" + ip + '\'' +
+                ", fileUploadServerPort=" + fileUploadServerPort +
                 ", hostname='" + hostname + '\'' +
                 ", latestHeartbeatTime=" + latestHeartbeatTime +
                 ", storedDataSize=" + storedDataSize +

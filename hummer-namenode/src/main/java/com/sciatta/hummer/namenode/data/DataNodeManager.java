@@ -42,14 +42,15 @@ public class DataNodeManager {
     /**
      * 数据节点发起注册
      *
-     * @param ip       IP地址
-     * @param hostname 主机名
+     * @param ip                   IP地址
+     * @param hostname             主机名
+     * @param fileUploadServerPort 文件上传服务端口
      * @return 是否注册成功；true，注册成功；否则，注册失败
      */
-    public boolean register(String ip, String hostname) {
-        DataNodeInfo datanode = new DataNodeInfo(ip, hostname);
-        aliveDataNodes.put(ip + "-" + hostname, datanode);   // TODO 数据节点唯一规则
-        logger.debug("data node {}:{} register success", ip, hostname);
+    public boolean register(String ip, String hostname, int fileUploadServerPort) {
+        DataNodeInfo datanode = new DataNodeInfo(ip, hostname, fileUploadServerPort);
+        aliveDataNodes.put(DataNodeInfo.uniqueKey(ip, hostname), datanode);
+        logger.debug("data node {}({}) register success", hostname, ip);
         return true;
     }
 
@@ -61,9 +62,13 @@ public class DataNodeManager {
      * @return 是否心跳成功；true，心跳成功；否则，心跳失败
      */
     public boolean heartbeat(String ip, String hostname) {
-        DataNodeInfo datanode = aliveDataNodes.get(ip + "-" + hostname);
+        DataNodeInfo datanode = aliveDataNodes.get(DataNodeInfo.uniqueKey(ip, hostname));
+        if (datanode == null) {
+            return false;
+        }
+
         datanode.setLatestHeartbeatTime(System.currentTimeMillis());
-        logger.debug("data node {}:{} heartbeat success", ip, hostname);
+        logger.debug("data node {}({}) heartbeat success", hostname, ip);
         return true;
     }
 
@@ -84,7 +89,7 @@ public class DataNodeManager {
     /**
      * 数据节点存活状态检查监控线程
      */
-    class DataNodeAliveMonitor extends Thread { // TODO to 线程管理组件
+    private class DataNodeAliveMonitor extends Thread { // TODO to 线程管理组件
 
         @Override
         public void run() {
@@ -97,7 +102,7 @@ public class DataNodeManager {
                     while (dataNodeInfoIterator.hasNext()) {
                         datanode = dataNodeInfoIterator.next();
                         if (System.currentTimeMillis() - datanode.getLatestHeartbeatTime() > 90 * 1000) {   // TODO to config
-                            toRemoveDataNodes.add(datanode.getIp() + "-" + datanode.getHostname());
+                            toRemoveDataNodes.add(DataNodeInfo.uniqueKey(datanode.getIp(), datanode.getHostname()));
                         }
                     }
 

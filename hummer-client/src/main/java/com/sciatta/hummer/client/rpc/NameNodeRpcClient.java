@@ -1,6 +1,7 @@
 package com.sciatta.hummer.client.rpc;
 
 import com.google.gson.reflect.TypeToken;
+import com.sciatta.hummer.client.config.FileSystemClientConfig;
 import com.sciatta.hummer.core.data.DataNodeInfo;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.rpc.*;
@@ -10,9 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-
-import static com.sciatta.hummer.client.config.FileSystemClientConfig.NAME_NODE_RPC_HOST;
-import static com.sciatta.hummer.client.config.FileSystemClientConfig.NAME_NODE_RPC_PORT;
 
 /**
  * Created by Rain on 2022/12/16<br>
@@ -26,7 +24,8 @@ public class NameNodeRpcClient {
     private final NameNodeServiceGrpc.NameNodeServiceBlockingStub nameNodeServiceGrpc;
 
     public NameNodeRpcClient() {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(NAME_NODE_RPC_HOST, NAME_NODE_RPC_PORT)
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(
+                        FileSystemClientConfig.getNameNodeRpcHost(), FileSystemClientConfig.getNameNodeRpcPort())
                 .usePlaintext()
                 .build();
 

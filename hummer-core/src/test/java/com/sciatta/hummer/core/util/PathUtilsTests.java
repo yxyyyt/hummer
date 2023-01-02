@@ -16,6 +16,12 @@ import java.nio.file.Paths;
 public class PathUtilsTests {
 
     @Test
+    public void testGetUserHome() {
+        String userHome = PathUtils.getUserHome();
+        System.out.println(userHome);
+    }
+
+    @Test
     public void testGetFlushedSegmentFromEditsLogFile() {
         Path path = Paths.get("/hummer/data/editslog/edits-1-1.log");
 

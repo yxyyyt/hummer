@@ -10,6 +10,7 @@ import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.core.util.PathUtils;
 import com.sciatta.hummer.core.util.StringUtils;
+import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,6 @@ import java.util.List;
 
 import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
 import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
-import static com.sciatta.hummer.namenode.config.NameNodeConfig.*;
 
 /**
  * Created by Rain on 2022/12/21<br>
@@ -39,17 +39,17 @@ public class FSNameSystem extends AbstractFSNameSystem {
 
     @Override
     public int getEditsLogBufferLimit() {
-        return EDITS_LOG_BUFFER_LIMIT;
+        return NameNodeConfig.getEditsLogBufferLimit();
     }
 
     @Override
     public String getEditsLogPath() {
-        return EDITS_LOG_PATH;
+        return NameNodeConfig.getEditsLogPath();
     }
 
     @Override
     public String getRuntimeRepositoryPath() {
-        return RUNTIME_REPOSITORY_PATH;
+        return NameNodeConfig.getRuntimeRepositoryPath();
     }
 
     /**
@@ -107,9 +107,7 @@ public class FSNameSystem extends AbstractFSNameSystem {
         }
 
         String[] jsons = new String(bufferData).split(StringUtils.getNewLine());
-        Arrays.stream(jsons).forEach(json -> {
-            ans.add(GsonUtils.fromJson(json, EditLog.class));
-        });
+        Arrays.stream(jsons).forEach(json -> ans.add(GsonUtils.fromJson(json, EditLog.class)));
 
         return ans;
     }
@@ -126,9 +124,7 @@ public class FSNameSystem extends AbstractFSNameSystem {
         try {
             List<String> jsons = Files.readAllLines(PathUtils.getEditsLogFile(
                     getEditsLogPath(), flushedSegment.getMinTxId(), flushedSegment.getMaxTxId()), StandardCharsets.UTF_8);
-            jsons.forEach(json -> {
-                ans.add(GsonUtils.fromJson(json, EditLog.class));
-            });
+            jsons.forEach(json -> ans.add(GsonUtils.fromJson(json, EditLog.class)));
         } catch (IOException e) {
             logger.error("{} while get editsLog from flushed file", e.getMessage());
         }
@@ -145,7 +141,7 @@ public class FSNameSystem extends AbstractFSNameSystem {
             long maxTxId = runtimeRepository.getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0);
             long timestamp = runtimeRepository.getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0);
 
-            file = PathUtils.getFSImageFile(CHECKPOINT_PATH, maxTxId, timestamp, false);
+            file = PathUtils.getFSImageFile(NameNodeConfig.getCheckpointPath(), maxTxId, timestamp, false);
             byte[] allBytes = Files.readAllBytes(file);
 
             fsImage = new FSImage(maxTxId, new String(allBytes, 0, allBytes.length), timestamp);

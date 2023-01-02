@@ -1,6 +1,7 @@
 package com.sciatta.hummer.namenode.rpc;
 
 import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
@@ -16,8 +17,6 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-
-import static com.sciatta.hummer.namenode.config.NameNodeConfig.BACKUP_NODE_MAX_FETCH_SIZE;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -290,7 +289,7 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
                 fetchCount++;
             }
 
-            if (fetchCount == BACKUP_NODE_MAX_FETCH_SIZE) { // TODO 防御编程，大小还是备份节点上传，这里不能超过这个最大值
+            if (fetchCount == NameNodeConfig.getBackupNodeMaxFetchSize()) { // TODO 防御编程，大小还是备份节点上传，这里不能超过这个最大值
                 break;
             }
         }

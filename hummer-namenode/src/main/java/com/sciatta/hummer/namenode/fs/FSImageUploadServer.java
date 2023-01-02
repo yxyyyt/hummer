@@ -3,6 +3,7 @@ package com.sciatta.hummer.namenode.fs;
 import com.sciatta.hummer.core.fs.AbstractFSNameSystem;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.util.PathUtils;
+import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +18,6 @@ import java.util.Iterator;
 
 import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
 import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
-import static com.sciatta.hummer.namenode.config.NameNodeConfig.CHECKPOINT_PATH;
-import static com.sciatta.hummer.namenode.config.NameNodeConfig.NAME_NODE_IMAGE_UPLOAD_SERVER_PORT;
 
 /**
  * Created by Rain on 2022/10/25<br>
@@ -114,10 +113,10 @@ public class FSImageUploadServer extends Thread {
             selector = Selector.open();
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
-            serverSocketChannel.socket().bind(new InetSocketAddress(NAME_NODE_IMAGE_UPLOAD_SERVER_PORT), 100);
+            serverSocketChannel.socket().bind(new InetSocketAddress(NameNodeConfig.getNameNodeImageUploadServerPort()), 100);
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-            logger.debug("name node image upload server start and listen {} port", NAME_NODE_IMAGE_UPLOAD_SERVER_PORT);
+            logger.debug("name node image upload server start and listen {} port", NameNodeConfig.getNameNodeImageUploadServerPort());
         } catch (IOException e) {
             logger.error("{} while init server socket channel", e.getMessage());
             throw e;
@@ -223,7 +222,7 @@ public class FSImageUploadServer extends Thread {
             return false;
         }
 
-        Path checkPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
+        Path checkPointFile = PathUtils.getFSImageFile(NameNodeConfig.getCheckpointPath(),
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                 false);
@@ -234,7 +233,7 @@ public class FSImageUploadServer extends Thread {
             return true;
         }
 
-        Path lastCheckPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
+        Path lastCheckPointFile = PathUtils.getFSImageFile(NameNodeConfig.getCheckpointPath(),
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                 true);
@@ -417,7 +416,7 @@ public class FSImageUploadServer extends Thread {
         FileChannel fileChannel = null;
 
         try {
-            Path checkPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
+            Path checkPointFile = PathUtils.getFSImageFile(NameNodeConfig.getCheckpointPath(),
                     cachedFSImage.checkPointMaxTxId, cachedFSImage.checkPointTimestamp, false);
 
             fileChannel = FileChannel.open(checkPointFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
@@ -445,7 +444,7 @@ public class FSImageUploadServer extends Thread {
      */
     private void afterWriteFsImage() throws IOException {
         // 若存在临时镜像文件，则删除
-        Path lastCheckPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
+        Path lastCheckPointFile = PathUtils.getFSImageFile(NameNodeConfig.getCheckpointPath(),
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                 fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                 true);

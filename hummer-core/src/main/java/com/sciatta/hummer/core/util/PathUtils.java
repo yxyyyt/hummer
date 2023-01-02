@@ -25,6 +25,24 @@ public class PathUtils {
     public static final String FILE_SUFFIX = ".";
 
     /**
+     * 获取用户目录
+     *
+     * @return 用户目录
+     */
+    public static String getUserHome() {
+        return System.getProperty("user.home");
+    }
+
+    /**
+     * 获取文件分隔符
+     *
+     * @return 文件分隔符
+     */
+    public static String getFileSeparator() {
+        return File.separator;
+    }
+
+    /**
      * 获取路径，如果路径所在目录不存在，则递归创建
      *
      * @param path 路径字符串
@@ -46,7 +64,7 @@ public class PathUtils {
      * @return 目录
      */
     public static String getDirectoryFromPath(String path) {
-        int end = path.lastIndexOf(File.separator);
+        int end = path.lastIndexOf(getFileSeparator());
         return path.substring(0, end + 1);
     }
 
@@ -57,7 +75,7 @@ public class PathUtils {
      * @return 文件
      */
     public static String getFileFromPath(String path) {
-        int start = path.lastIndexOf(File.separator);
+        int start = path.lastIndexOf(getFileSeparator());
         return path.substring(start + 1);
     }
 
@@ -167,8 +185,8 @@ public class PathUtils {
      * @return 路径后面带有目录分隔符的路径
      */
     public static String getPathWithSlashAtLast(String path) {
-        if (path.lastIndexOf(File.separator) != (path.length() - 1)) {
-            path += File.separator;
+        if (path.lastIndexOf(getFileSeparator()) != (path.length() - 1)) {
+            path += getFileSeparator();
         }
 
         return path;

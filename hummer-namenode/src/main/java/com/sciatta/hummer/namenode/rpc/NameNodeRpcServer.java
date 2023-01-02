@@ -1,5 +1,6 @@
 package com.sciatta.hummer.namenode.rpc;
 
+import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.namenode.data.DataNodeManager;
@@ -8,8 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-
-import static com.sciatta.hummer.namenode.config.NameNodeConfig.NAME_NODE_RPC_SERVER_PORT;
 
 /**
  * Created by Rain on 2022/12/16<br>
@@ -38,7 +37,7 @@ public class NameNodeRpcServer {
      * 启动RPC服务
      */
     public void start() throws IOException {
-        grpcServer = ServerBuilder.forPort(NAME_NODE_RPC_SERVER_PORT)
+        grpcServer = ServerBuilder.forPort(NameNodeConfig.getNameNodeRpcServerPort())
                 .addService(new NameNodeRpcService(fsNameSystem, dataNodeManager, server))
                 .build()
                 .start();

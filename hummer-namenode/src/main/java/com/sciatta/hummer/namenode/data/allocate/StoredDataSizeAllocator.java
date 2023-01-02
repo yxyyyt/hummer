@@ -1,12 +1,11 @@
 package com.sciatta.hummer.namenode.data.allocate;
 
 import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-
-import static com.sciatta.hummer.namenode.config.NameNodeConfig.NUMBER_OF_REPLICATED;
 
 /**
  * Created by Rain on 2022/12/31<br>
@@ -18,19 +17,19 @@ public class StoredDataSizeAllocator implements DataNodeAllocator {
 
     @Override
     public List<DataNodeInfo> allocateDataNodes(Map<String, DataNodeInfo> aliveDataNodes) {
-        List<DataNodeInfo> selectedDataNodes = new ArrayList<>(NUMBER_OF_REPLICATED);
+        List<DataNodeInfo> selectedDataNodes = new ArrayList<>(NameNodeConfig.getNumberOfReplicated());
         List<DataNodeInfo> dataNodes = new ArrayList<>(aliveDataNodes.values());
 
-        if (dataNodes.size() < NUMBER_OF_REPLICATED) {
+        if (dataNodes.size() < NameNodeConfig.getNumberOfReplicated()) {
             logger.warn("current the number of can be allocated dataNodes {} less than NUMBER_OF_REPLICATED {}",
-                    dataNodes.size(), NUMBER_OF_REPLICATED);
+                    dataNodes.size(), NameNodeConfig.getNumberOfReplicated());
             return selectedDataNodes;
         }
 
         // 按大小排序
         dataNodes.sort((d1, d2) -> (int) (d1.getStoredDataSize() - d2.getStoredDataSize()));
 
-        for (int i = 0; i < NUMBER_OF_REPLICATED; i++) {
+        for (int i = 0; i < NameNodeConfig.getNumberOfReplicated(); i++) {
             selectedDataNodes.add(dataNodes.get(i));
         }
 

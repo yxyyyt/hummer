@@ -1,6 +1,7 @@
 package com.sciatta.hummer.backupnode.rpc;
 
 import com.google.gson.reflect.TypeToken;
+import com.sciatta.hummer.backupnode.config.BackupNodeConfig;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.rpc.FetchEditsLogRequest;
@@ -14,9 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.NAME_NODE_RPC_HOST;
-import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.NAME_NODE_RPC_PORT;
-
 /**
  * Created by Rain on 2022/12/15<br>
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
@@ -28,7 +26,8 @@ public class NameNodeRpcClient {
     private final NameNodeServiceGrpc.NameNodeServiceBlockingStub nameNodeService;
 
     public NameNodeRpcClient() {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(NAME_NODE_RPC_HOST, NAME_NODE_RPC_PORT)
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(
+                        BackupNodeConfig.getNameNodeRpcHost(), BackupNodeConfig.getNameNodeRpcPort())
                 .usePlaintext()
                 .build();
 

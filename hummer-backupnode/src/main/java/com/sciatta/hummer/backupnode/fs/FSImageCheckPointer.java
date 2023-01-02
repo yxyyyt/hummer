@@ -1,5 +1,6 @@
 package com.sciatta.hummer.backupnode.fs;
 
+import com.sciatta.hummer.backupnode.config.BackupNodeConfig;
 import com.sciatta.hummer.core.fs.directory.FSImage;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.util.PathUtils;
@@ -13,8 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.CHECKPOINT_INTERVAL;
-import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.CHECKPOINT_PATH;
 import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
 import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
 
@@ -39,7 +38,7 @@ public class FSImageCheckPointer extends Thread {
     public void run() {
         while (!server.isClosing()) {
             try {
-                Thread.sleep(CHECKPOINT_INTERVAL);
+                Thread.sleep(BackupNodeConfig.getCheckpointInterval());
             } catch (InterruptedException ignore) {
             }
 
@@ -70,7 +69,7 @@ public class FSImageCheckPointer extends Thread {
      */
     private boolean beforeCheckPoint() {
         try {
-            Path checkPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
+            Path checkPointFile = PathUtils.getFSImageFile(BackupNodeConfig.getCheckpointPath(),
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                     false);
@@ -81,7 +80,7 @@ public class FSImageCheckPointer extends Thread {
                 return true;
             }
 
-            Path lastCheckPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
+            Path lastCheckPointFile = PathUtils.getFSImageFile(BackupNodeConfig.getCheckpointPath(),
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                     true);
@@ -133,7 +132,7 @@ public class FSImageCheckPointer extends Thread {
         FileChannel fileChannel = null;
 
         try {
-            Path checkPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
+            Path checkPointFile = PathUtils.getFSImageFile(BackupNodeConfig.getCheckpointPath(),
                     fsImage.getMaxTxId(), fsImage.getTimestamp(), false);
 
             fileChannel = FileChannel.open(checkPointFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
@@ -177,7 +176,7 @@ public class FSImageCheckPointer extends Thread {
     private boolean afterCheckPoint(FSImage fsImage) {
         try {
             // 若存在临时镜像文件，则删除
-            Path lastCheckPointFile = PathUtils.getFSImageFile(CHECKPOINT_PATH,
+            Path lastCheckPointFile = PathUtils.getFSImageFile(BackupNodeConfig.getCheckpointPath(),
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0),
                     fsNameSystem.getRuntimeRepository().getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0),
                     true);

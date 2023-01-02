@@ -1,5 +1,6 @@
 package com.sciatta.hummer.backupnode.fs;
 
+import com.sciatta.hummer.backupnode.config.BackupNodeConfig;
 import com.sciatta.hummer.core.fs.directory.FSImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +12,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
-
-import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.NAME_NODE_IMAGE_UPLOAD_HOST;
-import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.NAME_NODE_IMAGE_UPLOAD_PORT;
 
 /**
  * Created by Rain on 2022/10/25<br>
@@ -43,7 +41,8 @@ public class FSImageUploader {
             channel.configureBlocking(false);
             channel.register(selector, SelectionKey.OP_CONNECT);
 
-            channel.connect(new InetSocketAddress(NAME_NODE_IMAGE_UPLOAD_HOST, NAME_NODE_IMAGE_UPLOAD_PORT));
+            channel.connect(new InetSocketAddress(
+                    BackupNodeConfig.getNameNodeImageUploadHost(), BackupNodeConfig.getNameNodeImageUploadPort()));
 
             boolean uploading = true;
 

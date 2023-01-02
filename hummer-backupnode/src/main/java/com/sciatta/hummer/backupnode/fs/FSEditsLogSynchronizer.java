@@ -1,5 +1,6 @@
 package com.sciatta.hummer.backupnode.fs;
 
+import com.sciatta.hummer.backupnode.config.BackupNodeConfig;
 import com.sciatta.hummer.backupnode.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.server.Server;
@@ -8,8 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.BACKUP_NODE_FETCH_SIZE;
 
 /**
  * Created by Rain on 2022/12/15<br>
@@ -46,9 +45,9 @@ public class FSEditsLogSynchronizer extends Thread {
             }
 
             // 小于拉取一个批次的数据，等待一会再重放
-            if (editsLog.size() < BACKUP_NODE_FETCH_SIZE) {
+            if (editsLog.size() < BackupNodeConfig.getBackupNodeFetchSize()) {
                 logger.debug("fetch editsLog [{}] < BACKUP_NODE_FETCH_SIZE [{}], wait a minute",
-                        editsLog.size(), BACKUP_NODE_FETCH_SIZE);
+                        editsLog.size(), BackupNodeConfig.getBackupNodeFetchSize());
                 try {
                     TimeUnit.SECONDS.sleep(1);
                 } catch (InterruptedException e) {

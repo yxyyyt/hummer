@@ -1,5 +1,6 @@
 package com.sciatta.hummer.backupnode.fs;
 
+import com.sciatta.hummer.backupnode.config.BackupNodeConfig;
 import com.sciatta.hummer.core.fs.AbstractFSNameSystem;
 import com.sciatta.hummer.core.fs.directory.FSImage;
 import com.sciatta.hummer.core.server.Server;
@@ -11,7 +12,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.sciatta.hummer.backupnode.config.BackupNodeConfig.*;
 import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
 import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
 
@@ -29,17 +29,17 @@ public class FSNameSystem extends AbstractFSNameSystem {
 
     @Override
     public int getEditsLogBufferLimit() {
-        return EDITS_LOG_BUFFER_LIMIT;
+        return BackupNodeConfig.getEditsLogBufferLimit();
     }
 
     @Override
     public String getEditsLogPath() {
-        return EDITS_LOG_PATH;
+        return BackupNodeConfig.getEditsLogPath();
     }
 
     @Override
     public String getRuntimeRepositoryPath() {
-        return RUNTIME_REPOSITORY_PATH;
+        return BackupNodeConfig.getRuntimeRepositoryPath();
     }
 
     /**
@@ -70,7 +70,7 @@ public class FSNameSystem extends AbstractFSNameSystem {
             long maxTxId = runtimeRepository.getLongParameter(LAST_CHECKPOINT_MAX_TX_ID, 0);
             long timestamp = runtimeRepository.getLongParameter(LAST_CHECKPOINT_TIMESTAMP, 0);
 
-            file = PathUtils.getFSImageFile(CHECKPOINT_PATH, maxTxId, timestamp, false);
+            file = PathUtils.getFSImageFile(BackupNodeConfig.getCheckpointPath(), maxTxId, timestamp, false);
             byte[] allBytes = Files.readAllBytes(file);
 
             fsImage = new FSImage(maxTxId, new String(allBytes, 0, allBytes.length), timestamp);

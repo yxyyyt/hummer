@@ -12,6 +12,7 @@ service NameNodeService {
   rpc FetchEditsLog(FetchEditsLogRequest) returns (FetchEditsLogResponse);
   rpc CreateFile(CreateFileRequest) returns (CreateFileResponse);
   rpc AllocateDataNodes(AllocateDataNodesRequest) returns(AllocateDataNodesResponse);
+  rpc IncrementalReport(IncrementalReportRequest) returns(IncrementalReportResponse);
 }
 
 // Register
@@ -75,4 +76,14 @@ message AllocateDataNodesRequest{
 message AllocateDataNodesResponse{
   string dataNodes = 1;
   int32 status = 2;
+}
+
+// IncrementalReport
+message IncrementalReportRequest {
+  string ip = 1;
+  string hostname = 2;
+  string fileName = 3;
+}
+message IncrementalReportResponse{
+  int32 status = 1;
 }

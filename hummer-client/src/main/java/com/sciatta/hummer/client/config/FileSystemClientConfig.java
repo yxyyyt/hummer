@@ -25,6 +25,9 @@ public class FileSystemClientConfig {
      * @return 元数据节点RPC端口
      */
     public static int getNameNodeRpcPort() {
-        return configManager.getIntConfig("NAME_NODE_RPC_PORT", 3030);
+        return configManager.getIntConfig("NAME_NODE_RPC_PORT",
+                3030);
     }
+
+
 }

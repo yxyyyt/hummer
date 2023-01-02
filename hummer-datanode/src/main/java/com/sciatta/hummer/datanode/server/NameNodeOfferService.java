@@ -1,13 +1,11 @@
 package com.sciatta.hummer.datanode.server;
 
+import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
-
-import static com.sciatta.hummer.datanode.server.DataNodeConfig.ACTIVE_NAME_NODE_RPC_HOST;
-import static com.sciatta.hummer.datanode.server.DataNodeConfig.ACTIVE_NAME_NODE_RPC_PORT;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -22,8 +20,8 @@ public class NameNodeOfferService {
     private final CopyOnWriteArrayList<NameNodeServiceActor> serviceActors = new CopyOnWriteArrayList<>();
 
     public NameNodeOfferService() {
-        NameNodeServiceActor activeServiceActor =
-                new NameNodeServiceActor(ACTIVE_NAME_NODE_RPC_HOST, ACTIVE_NAME_NODE_RPC_PORT);
+        NameNodeServiceActor activeServiceActor = new NameNodeServiceActor(
+                DataNodeConfig.getActiveNameNodeRpcHost(), DataNodeConfig.getActiveNameNodeRpcPort());
 
         this.serviceActors.add(activeServiceActor);
     }

@@ -1,5 +1,6 @@
 package com.sciatta.hummer.datanode.server;
 
+import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
 import com.sciatta.hummer.rpc.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -15,9 +16,6 @@ import java.util.concurrent.CountDownLatch;
  */
 public class NameNodeServiceActor {
     private static final Logger logger = LoggerFactory.getLogger(NameNodeServiceActor.class);
-
-    private static final String LOCAL_IP = "localhost"; // TODO to config
-    private static final String LOCAL_HOST_NAME = "dfs-data-02";
 
     private final NameNodeServiceGrpc.NameNodeServiceBlockingStub nameNodeServiceGrpc;
 
@@ -65,8 +63,8 @@ public class NameNodeServiceActor {
                 logger.debug("send request to name node for registration");
 
                 RegisterRequest request = RegisterRequest.newBuilder()
-                        .setIp(LOCAL_IP)
-                        .setHostname(LOCAL_HOST_NAME)
+                        .setHostname(DataNodeConfig.getLocalHostname())
+                        .setPort(DataNodeConfig.getLocalPort())
                         .build();
 
                 RegisterResponse response = nameNodeServiceGrpc.register(request);
@@ -91,8 +89,8 @@ public class NameNodeServiceActor {
                 logger.debug("send request to name node for heartbeat");
 
                 HeartbeatRequest request = HeartbeatRequest.newBuilder()
-                        .setIp(LOCAL_IP)
-                        .setHostname(LOCAL_HOST_NAME)
+                        .setHostname(DataNodeConfig.getLocalHostname())
+                        .setPort(DataNodeConfig.getLocalPort())
                         .build();
 
                 HeartbeatResponse response = nameNodeServiceGrpc.heartbeat(request);

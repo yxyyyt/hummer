@@ -1,7 +1,8 @@
-package com.sciatta.hummer.namenode.data.allocate;
+package com.sciatta.hummer.namenode.data.allocate.impl;
 
 import com.sciatta.hummer.core.data.DataNodeInfo;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
+import com.sciatta.hummer.namenode.data.allocate.DataNodeAllocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

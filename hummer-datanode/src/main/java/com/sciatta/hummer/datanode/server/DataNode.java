@@ -1,5 +1,7 @@
 package com.sciatta.hummer.datanode.server;
 
+import com.sciatta.hummer.datanode.server.fs.DataNodeFileServer;
+
 /**
  * Created by Rain on 2022/12/13<br>
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
@@ -12,17 +14,15 @@ public class DataNode {
     private volatile Boolean shouldRun; // 统一运行方式
 
     /**
-     * 同一组元数据节点通信
-     */
-    private NameNodeOfferService offerService;
-
-    /**
      * 初始化
      */
     private void initialize() {
         this.shouldRun = true;
-        this.offerService = new NameNodeOfferService();
-        this.offerService.start();
+        NameNodeOfferService offerService = new NameNodeOfferService();
+        offerService.start();
+
+        DataNodeFileServer dataNodeFileServer = new DataNodeFileServer();
+        dataNodeFileServer.start();
     }
 
     /**

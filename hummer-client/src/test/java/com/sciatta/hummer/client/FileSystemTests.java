@@ -1,5 +1,7 @@
 package com.sciatta.hummer.client;
 
+import com.sciatta.hummer.client.fs.FileSystem;
+import com.sciatta.hummer.client.fs.FileSystemImpl;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;

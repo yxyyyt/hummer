@@ -3,7 +3,7 @@ package com.sciatta.hummer.namenode.data;
 import com.sciatta.hummer.core.data.DataNodeInfo;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.namenode.data.allocate.DataNodeAllocator;
-import com.sciatta.hummer.namenode.data.allocate.StoredDataSizeAllocator;
+import com.sciatta.hummer.namenode.data.allocate.impl.StoredDataSizeAllocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,33 +42,32 @@ public class DataNodeManager {
     /**
      * 数据节点发起注册
      *
-     * @param ip                   IP地址
-     * @param hostname             主机名
-     * @param fileUploadServerPort 文件上传服务端口
+     * @param hostname 数据节点主机名
+     * @param port     数据节点端口
      * @return 是否注册成功；true，注册成功；否则，注册失败
      */
-    public boolean register(String ip, String hostname, int fileUploadServerPort) {
-        DataNodeInfo datanode = new DataNodeInfo(ip, hostname, fileUploadServerPort);
-        aliveDataNodes.put(DataNodeInfo.uniqueKey(ip, hostname), datanode);
-        logger.debug("data node {}({}) register success", hostname, ip);
+    public boolean register(String hostname, int port) {
+        DataNodeInfo datanode = new DataNodeInfo(hostname, port);
+        aliveDataNodes.put(DataNodeInfo.uniqueKey(hostname, port), datanode);
+        logger.debug("data node {}:{} register success", hostname, port);
         return true;
     }
 
     /**
      * 数据节点发起心跳
      *
-     * @param ip       IP地址
-     * @param hostname 主机名
+     * @param hostname 数据节点主机名
+     * @param port     数据节点端口
      * @return 是否心跳成功；true，心跳成功；否则，心跳失败
      */
-    public boolean heartbeat(String ip, String hostname) {
-        DataNodeInfo datanode = aliveDataNodes.get(DataNodeInfo.uniqueKey(ip, hostname));
+    public boolean heartbeat(String hostname, int port) {
+        DataNodeInfo datanode = aliveDataNodes.get(DataNodeInfo.uniqueKey(hostname, port));
         if (datanode == null) {
             return false;
         }
 
         datanode.setLatestHeartbeatTime(System.currentTimeMillis());
-        logger.debug("data node {}({}) heartbeat success", hostname, ip);
+        logger.debug("data node {}:{} register success", hostname, port);
         return true;
     }
 
@@ -102,7 +101,7 @@ public class DataNodeManager {
                     while (dataNodeInfoIterator.hasNext()) {
                         datanode = dataNodeInfoIterator.next();
                         if (System.currentTimeMillis() - datanode.getLatestHeartbeatTime() > 90 * 1000) {   // TODO to config
-                            toRemoveDataNodes.add(DataNodeInfo.uniqueKey(datanode.getIp(), datanode.getHostname()));
+                            toRemoveDataNodes.add(DataNodeInfo.uniqueKey(datanode.getHostname(), datanode.getPort()));
                         }
                     }
 

@@ -1,4 +1,4 @@
-package com.sciatta.hummer.client;
+package com.sciatta.hummer.client.fs;
 
 /**
  * Created by Rain on 2022/10/15<br>
@@ -15,12 +15,14 @@ public interface FileSystem {
     int mkdir(String path);
 
     /**
-     * 创建文件
+     * 上传文件
      *
+     * @param file     文件字节数组
      * @param fileName 文件名
-     * @return 创建文件响应
+     * @param fileSize 文件大小
+     * @return 上传文件是否成功；true，上传文件成功；否则，上传文件失败
      */
-    int createFile(String fileName);
+    boolean uploadFile(byte[] file, String fileName, long fileSize);
 
     /**
      * 优雅停机

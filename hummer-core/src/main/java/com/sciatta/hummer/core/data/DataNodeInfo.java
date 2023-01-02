@@ -7,19 +7,14 @@ package com.sciatta.hummer.core.data;
  */
 public class DataNodeInfo {
     /**
-     * IP地址
-     */
-    private String ip;
-
-    /**
-     * 文件上传服务端口
-     */
-    private int fileUploadServerPort;
-
-    /**
      * 主机名
      */
     private String hostname;
+
+    /**
+     * 端口
+     */
+    private int port;
 
     /**
      * 上一次心跳的时间
@@ -31,26 +26,17 @@ public class DataNodeInfo {
      */
     private long storedDataSize;
 
-    public DataNodeInfo(String ip, String hostname, int fileUploadServerPort) {
-        this.ip = ip;
+    public DataNodeInfo(String hostname, int port) {
         this.hostname = hostname;
-        this.fileUploadServerPort = fileUploadServerPort;
+        this.port = port;
     }
 
-    public String getIp() {
-        return ip;
+    public int getPort() {
+        return port;
     }
 
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public int getFileUploadServerPort() {
-        return fileUploadServerPort;
-    }
-
-    public void setFileUploadServerPort(int fileUploadServerPort) {
-        this.fileUploadServerPort = fileUploadServerPort;
+    public void setPort(int port) {
+        this.port = port;
     }
 
     public String getHostname() {
@@ -81,16 +67,22 @@ public class DataNodeInfo {
         this.storedDataSize += storedDataSize;
     }
 
-    public static String uniqueKey(String ip, String hostname) {
-        return ip + "-" + hostname;
+    /**
+     * 获取数据节点唯一标识
+     *
+     * @param hostname 主机名
+     * @param port     端口
+     * @return 数据节点唯一标识
+     */
+    public static String uniqueKey(String hostname, int port) {
+        return hostname + ":" + port;
     }
 
     @Override
     public String toString() {
         return "DataNodeInfo{" +
-                "ip='" + ip + '\'' +
-                ", fileUploadServerPort=" + fileUploadServerPort +
-                ", hostname='" + hostname + '\'' +
+                "hostname='" + hostname + '\'' +
+                ", port=" + port +
                 ", latestHeartbeatTime=" + latestHeartbeatTime +
                 ", storedDataSize=" + storedDataSize +
                 '}';

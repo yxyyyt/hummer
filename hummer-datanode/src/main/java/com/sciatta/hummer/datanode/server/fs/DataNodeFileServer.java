@@ -1,6 +1,7 @@
 package com.sciatta.hummer.datanode.server.fs;
 
 import com.sciatta.hummer.core.exception.HummerException;
+import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.util.PathUtils;
 import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
 import org.slf4j.Logger;
@@ -34,7 +35,9 @@ public class DataNodeFileServer extends Thread {
      */
     private final Map<String, CachedFile> cachedFileMap = new HashMap<>();
 
-    public DataNodeFileServer() {
+    private final Server server;
+
+    public DataNodeFileServer(Server server) {
         ServerSocketChannel serverSocketChannel;
 
         try {
@@ -57,11 +60,13 @@ public class DataNodeFileServer extends Thread {
             logger.error("{} while start data node file server", e.getMessage());
             throw new HummerException("%s while start data node file server", e.getMessage());
         }
+
+        this.server = server;
     }
 
     @Override
     public void run() {
-        while (true) {
+        while (!server.isClosing()) {
             try {
                 selector.select();
                 Iterator<SelectionKey> keysIterator = selector.selectedKeys().iterator();
@@ -117,7 +122,7 @@ public class DataNodeFileServer extends Thread {
 
         @Override
         public void run() {
-            while (true) {
+            while (!server.isClosing()) {
                 SocketChannel channel = null;
 
                 try {

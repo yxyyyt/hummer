@@ -12,21 +12,21 @@ public class DataNodeConfig {
     private static final ConfigManager configManager = ConfigManager.getInstance();
 
     /**
-     * 获取主元数据节点RPC主机名
+     * 获取元数据节点RPC主机名
      *
-     * @return 主元数据节点RPC主机名
+     * @return 元数据节点RPC主机名
      */
-    public static String getActiveNameNodeRpcHost() {
-        return configManager.getStringConfig("ACTIVE_NAME_NODE_RPC_HOST", "localhost");
+    public static String getNameNodeRpcHost() {
+        return configManager.getStringConfig("NAME_NODE_RPC_HOST", "localhost");
     }
 
     /**
-     * 获取主元数据节点RPC端口
+     * 获取元数据节点RPC端口
      *
-     * @return 主元数据节点RPC端口
+     * @return 元数据节点RPC端口
      */
-    public static int getActiveNameNodeRpcPort() {
-        return configManager.getIntConfig("ACTIVE_NAME_NODE_RPC_PORT", 3030);
+    public static int getNameNodeRpcPort() {
+        return configManager.getIntConfig("NAME_NODE_RPC_PORT", 3030);
     }
 
     /**
@@ -77,5 +77,14 @@ public class DataNodeConfig {
                 PathUtils.getPathWithSlashAtLast(getDataNodeRootPath()) +
                         "datas" + PathUtils.getFileSeparator() +
                         getLocalHostname() + PathUtils.getFileSeparator());
+    }
+
+    /**
+     * 获取心跳间隔
+     *
+     * @return 心跳间隔
+     */
+    public static int getHeartbeatInterval() {
+        return configManager.getIntConfig("HEARTBEAT_INTERVAL", 30 * 1000);
     }
 }

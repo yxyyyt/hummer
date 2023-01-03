@@ -80,7 +80,7 @@ message AllocateDataNodesResponse{
 // IncrementalReport
 message IncrementalReportRequest {
   string hostname = 1;
-  string port = 2;
+  int32 port = 2;
   string fileName = 3;
 }
 message IncrementalReportResponse{

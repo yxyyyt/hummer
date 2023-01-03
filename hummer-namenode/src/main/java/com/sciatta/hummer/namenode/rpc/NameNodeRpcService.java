@@ -158,6 +158,37 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
     }
 
     @Override
+    public void incrementalReport(IncrementalReportRequest request, StreamObserver<IncrementalReportResponse> responseObserver) {
+        IncrementalReportResponse response;
+
+        if (!server.isStarted() || server.isClosing()) {
+            response = IncrementalReportResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        DataNodeInfo dataNode = dataNodeManager.isAlive(request.getHostname(), request.getPort());
+        if (dataNode == null) {
+            response = IncrementalReportResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        boolean test = fsNameSystem.incrementalReport(dataNode, request.getFileName());
+
+        if (test) {
+            response = IncrementalReportResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+        } else {
+            response = IncrementalReportResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+        }
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
     public void fetchEditsLog(FetchEditsLogRequest request, StreamObserver<FetchEditsLogResponse> responseObserver) {
         FetchEditsLogResponse response;
 

@@ -4,6 +4,7 @@ import com.sciatta.hummer.core.exception.HummerException;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.util.PathUtils;
 import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
+import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,9 +36,11 @@ public class DataNodeFileServer extends Thread {
      */
     private final Map<String, CachedFile> cachedFileMap = new HashMap<>();
 
+    private final NameNodeRpcClient nameNodeRpcClient;
+
     private final Server server;
 
-    public DataNodeFileServer(Server server) {
+    public DataNodeFileServer(Server server, NameNodeRpcClient nameNodeRpcClient) {
         ServerSocketChannel serverSocketChannel;
 
         try {
@@ -62,6 +65,7 @@ public class DataNodeFileServer extends Thread {
         }
 
         this.server = server;
+        this.nameNodeRpcClient = nameNodeRpcClient;
     }
 
     @Override
@@ -183,6 +187,9 @@ public class DataNodeFileServer extends Thread {
                         channel.write(outBuffer);
                         cachedFileMap.remove(remoteAddress);
                         logger.debug("file has been read completely, send {} response {}", remoteAddress, response);
+
+                        // 向元数据节点增量上报文件
+                        nameNodeRpcClient.incrementalReport(fileName);
                     } else {
                         // 未读取完成，缓存文件等待下一次读取
                         CachedFile cachedFile = new CachedFile(fileName, fileSize, hasReadFileSize);

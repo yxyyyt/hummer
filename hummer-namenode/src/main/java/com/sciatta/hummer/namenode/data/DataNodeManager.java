@@ -40,6 +40,17 @@ public class DataNodeManager {
     }
 
     /**
+     * 数据节点是否可用
+     *
+     * @param hostname 数据节点主机名
+     * @param port     数据节点端口
+     * @return 如果可用，返回数据节点；否则，返回null
+     */
+    public DataNodeInfo isAlive(String hostname, int port) {
+        return aliveDataNodes.get(DataNodeInfo.uniqueKey(hostname, port));
+    }
+
+    /**
      * 数据节点发起注册
      *
      * @param hostname 数据节点主机名
@@ -61,7 +72,7 @@ public class DataNodeManager {
      * @return 是否心跳成功；true，心跳成功；否则，心跳失败
      */
     public boolean heartbeat(String hostname, int port) {
-        DataNodeInfo datanode = aliveDataNodes.get(DataNodeInfo.uniqueKey(hostname, port));
+        DataNodeInfo datanode = isAlive(hostname, port);
         if (datanode == null) {
             return false;
         }

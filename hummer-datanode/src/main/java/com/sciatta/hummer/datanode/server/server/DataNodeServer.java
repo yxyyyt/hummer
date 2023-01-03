@@ -23,7 +23,7 @@ public class DataNodeServer extends AbstractServer {
         super();
 
         this.nameNodeRpcClient = new NameNodeRpcClient(this);
-        this.dataNodeFileServer = new DataNodeFileServer(this);
+        this.dataNodeFileServer = new DataNodeFileServer(this, nameNodeRpcClient);
     }
 
     @Override

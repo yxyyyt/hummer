@@ -75,6 +75,7 @@ public class DataNodeManager {
         if (dataNode != null) {
             unavailableDataNodes.remove(uniqueKey);
             dataNode.setLatestRegisterTime(System.currentTimeMillis());
+            dataNode.setLatestHeartbeatTime(System.currentTimeMillis());
             availableDataNodes.put(uniqueKey, dataNode);
             logger.debug("data node {}:{} has registered, but not available, update register time {}", hostname,
                     port, dataNode.getLatestRegisterTime());
@@ -84,6 +85,7 @@ public class DataNodeManager {
         // 新注册
         dataNode = new DataNodeInfo(hostname, port);
         dataNode.setLatestRegisterTime(System.currentTimeMillis());
+        dataNode.setLatestHeartbeatTime(System.currentTimeMillis());
         availableDataNodes.put(uniqueKey, dataNode);
         logger.debug("data node {}:{} register success, register time {}", hostname, port,
                 dataNode.getLatestRegisterTime());
@@ -194,6 +196,7 @@ public class DataNodeManager {
      * 数据节点存活状态检查监控线程
      */
     private class DataNodeAliveMonitor extends Thread { // TODO to 线程管理组件
+        private final Logger logger = LoggerFactory.getLogger(DataNodeAliveMonitor.class);
 
         @Override
         public void run() {

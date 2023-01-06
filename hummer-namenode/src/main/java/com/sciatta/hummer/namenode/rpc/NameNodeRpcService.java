@@ -1,13 +1,16 @@
 package com.sciatta.hummer.namenode.rpc;
 
+import com.google.gson.reflect.TypeToken;
 import com.sciatta.hummer.core.data.DataNodeInfo;
-import com.sciatta.hummer.namenode.config.NameNodeConfig;
-import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
 import com.sciatta.hummer.core.server.Server;
+import com.sciatta.hummer.core.transport.Command;
+import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.util.GsonUtils;
+import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import com.sciatta.hummer.namenode.data.DataNodeManager;
+import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.rpc.*;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
@@ -26,16 +29,6 @@ import java.util.List;
 public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplBase {
 
     private static final Logger logger = LoggerFactory.getLogger(NameNodeRpcService.class);
-
-    /**
-     * 成功
-     */
-    public static final Integer STATUS_SUCCESS = 1; // TODO to 通信常量
-
-    /**
-     * 失败
-     */
-    public static final Integer STATUS_FAILURE = 2;
 
     private final FSNameSystem fsNameSystem;
     private final DataNodeManager dataNodeManager;
@@ -70,19 +63,14 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         RegisterResponse response;
 
         if (!server.isStarted() || server.isClosing()) {
-            response = RegisterResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = RegisterResponse.newBuilder().setStatus(TransportStatus.Register.FAIL).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             return;
         }
 
-        boolean test = dataNodeManager.register(request.getHostname(), request.getPort());
-
-        if (test) {
-            response = RegisterResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
-        } else {
-            response = RegisterResponse.newBuilder().setStatus(STATUS_FAILURE).build();
-        }
+        int state = dataNodeManager.register(request.getHostname(), request.getPort());
+        response = RegisterResponse.newBuilder().setStatus(state).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -93,19 +81,21 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         HeartbeatResponse response;
 
         if (!server.isStarted() || server.isClosing()) {
-            response = HeartbeatResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = HeartbeatResponse.newBuilder().setStatus(TransportStatus.HeartBeat.FAIL).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             return;
         }
 
-        boolean test = dataNodeManager.heartbeat(request.getHostname(), request.getPort());
-
-        if (test) {
-            response = HeartbeatResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
-        } else {
-            response = HeartbeatResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+        List<Command> commands = new ArrayList<>();
+        int state = dataNodeManager.heartbeat(request.getHostname(), request.getPort());
+        if (state == TransportStatus.HeartBeat.NOT_REGISTERED) {
+            commands.add(new Command(TransportStatus.HeartBeat.CommandType.RE_REGISTER));
         }
+
+        response = HeartbeatResponse.newBuilder()
+                .setStatus(state)
+                .setRemoteCommands(GsonUtils.toJson(commands)).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -116,7 +106,7 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         MkdirResponse response;
 
         if (!server.isStarted() || server.isClosing()) {
-            response = MkdirResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = MkdirResponse.newBuilder().setStatus(TransportStatus.Mkdir.FAIL).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             return;
@@ -125,9 +115,9 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         boolean test = fsNameSystem.mkdir(request.getPath());
 
         if (test) {
-            response = MkdirResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+            response = MkdirResponse.newBuilder().setStatus(TransportStatus.Mkdir.SUCCESS).build();
         } else {
-            response = MkdirResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = MkdirResponse.newBuilder().setStatus(TransportStatus.Mkdir.FAIL).build();
         }
 
         responseObserver.onNext(response);
@@ -139,7 +129,7 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         CreateFileResponse response;
 
         if (!server.isStarted() || server.isClosing()) {
-            response = CreateFileResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = CreateFileResponse.newBuilder().setStatus(TransportStatus.CreateFile.FAIL).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             return;
@@ -148,9 +138,9 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         boolean test = fsNameSystem.createFile(request.getFileName());
 
         if (test) {
-            response = CreateFileResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+            response = CreateFileResponse.newBuilder().setStatus(TransportStatus.CreateFile.SUCCESS).build();
         } else {
-            response = CreateFileResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = CreateFileResponse.newBuilder().setStatus(TransportStatus.CreateFile.FAIL).build();
         }
 
         responseObserver.onNext(response);
@@ -162,26 +152,53 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         IncrementalReportResponse response;
 
         if (!server.isStarted() || server.isClosing()) {
-            response = IncrementalReportResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = IncrementalReportResponse.newBuilder().setStatus(TransportStatus.IncrementalReport.FAIL).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             return;
         }
 
-        DataNodeInfo dataNode = dataNodeManager.isAlive(request.getHostname(), request.getPort());
-        if (dataNode == null) {
-            response = IncrementalReportResponse.newBuilder().setStatus(STATUS_FAILURE).build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-            return;
-        }
-
-        boolean test = fsNameSystem.incrementalReport(dataNode, request.getFileName());
+        boolean test = dataNodeManager.incrementalReport(request.getHostname(), request.getPort(), request.getFileName());
 
         if (test) {
-            response = IncrementalReportResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+            response = IncrementalReportResponse.newBuilder().setStatus(TransportStatus.IncrementalReport.SUCCESS).build();
+            logger.debug("{} incremental report to data node {}:{} success",
+                    request.getFileName(), request.getHostname(), request.getPort());
         } else {
-            response = IncrementalReportResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = IncrementalReportResponse.newBuilder().setStatus(TransportStatus.IncrementalReport.FAIL).build();
+            logger.debug("{} incremental report to data node {}:{} fail",
+                    request.getFileName(), request.getHostname(), request.getPort());
+        }
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void fullReport(FullReportRequest request, StreamObserver<FullReportResponse> responseObserver) {
+        FullReportResponse response;
+
+        if (!server.isStarted() || server.isClosing()) {
+            response = FullReportResponse.newBuilder().setStatus(TransportStatus.FullReport.FAIL).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        boolean test = dataNodeManager.fullReport(request.getHostname(),
+                request.getPort(),
+                GsonUtils.fromJson(request.getFileNames(), new TypeToken<List<String>>() {
+                }.getType()),
+                request.getStoredDataSize());
+
+        if (test) {
+            response = FullReportResponse.newBuilder().setStatus(TransportStatus.FullReport.SUCCESS).build();
+            logger.debug("{} full report to data node {}:{} success",
+                    request.getFileNames(), request.getHostname(), request.getPort());
+        } else {
+            response = FullReportResponse.newBuilder().setStatus(TransportStatus.FullReport.FAIL).build();
+            logger.debug("{} incremental report to data node {}:{} fail",
+                    request.getFileNames(), request.getHostname(), request.getPort());
         }
 
         responseObserver.onNext(response);
@@ -193,7 +210,7 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         FetchEditsLogResponse response;
 
         if (!server.isStarted() || server.isClosing()) {
-            response = FetchEditsLogResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = FetchEditsLogResponse.newBuilder().setStatus(TransportStatus.FetchEditsLog.FAIL).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             return;
@@ -201,7 +218,7 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
 
         List<EditLog> editsLog = doFetchEditsLog(request.getSyncedTxId());
 
-        response = FetchEditsLogResponse.newBuilder().setStatus(STATUS_SUCCESS).setEditsLog(GsonUtils.toJson(editsLog)).build();
+        response = FetchEditsLogResponse.newBuilder().setStatus(TransportStatus.FetchEditsLog.SUCCESS).setEditsLog(GsonUtils.toJson(editsLog)).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -212,7 +229,7 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         AllocateDataNodesResponse response;
 
         if (!server.isStarted() || server.isClosing()) {
-            response = AllocateDataNodesResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = AllocateDataNodesResponse.newBuilder().setStatus(TransportStatus.AllocateDataNodes.FAIL).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             return;
@@ -221,11 +238,11 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         List<DataNodeInfo> dataNodes = this.dataNodeManager.allocateDataNodes(request.getFileSize());
         if (dataNodes.size() > 0) {
             response = AllocateDataNodesResponse.newBuilder()
-                    .setStatus(STATUS_SUCCESS)
+                    .setStatus(TransportStatus.AllocateDataNodes.SUCCESS)
                     .setDataNodes(GsonUtils.toJson(dataNodes))
                     .build();
         } else {
-            response = AllocateDataNodesResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = AllocateDataNodesResponse.newBuilder().setStatus(TransportStatus.AllocateDataNodes.FAIL).build();
         }
 
         responseObserver.onNext(response);
@@ -237,7 +254,7 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         ShutdownResponse response;
 
         if (!server.isStarted() || server.isClosing()) {
-            response = ShutdownResponse.newBuilder().setStatus(STATUS_FAILURE).build();
+            response = ShutdownResponse.newBuilder().setStatus(TransportStatus.Shutdown.FAIL).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             return;
@@ -245,7 +262,7 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
 
         server.close();
 
-        response = ShutdownResponse.newBuilder().setStatus(STATUS_SUCCESS).build();
+        response = ShutdownResponse.newBuilder().setStatus(TransportStatus.Shutdown.SUCCESS).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

@@ -24,7 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class DataNodeFileServer extends Thread {
     private static final Logger logger = LoggerFactory.getLogger(DataNodeFileServer.class);
 
-    private final Selector selector;
+    private Selector selector;
 
     /**
      * 任务处理队列
@@ -41,6 +41,35 @@ public class DataNodeFileServer extends Thread {
     private final Server server;
 
     public DataNodeFileServer(Server server, NameNodeRpcClient nameNodeRpcClient) {
+        this.server = server;
+        this.nameNodeRpcClient = nameNodeRpcClient;
+
+        // 初始化服务通道
+        initServerSocketChannel();
+    }
+
+    @Override
+    public void run() {
+        while (!server.isClosing()) {
+            try {
+                selector.select();
+                Iterator<SelectionKey> keysIterator = selector.selectedKeys().iterator();
+
+                while (keysIterator.hasNext()) {
+                    SelectionKey key = keysIterator.next();
+                    keysIterator.remove();
+                    handleRequest(key);
+                }
+            } catch (Throwable e) {
+                logger.error("{} while handle request", e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * 初始化服务通道
+     */
+    private void initServerSocketChannel() {
         ServerSocketChannel serverSocketChannel;
 
         try {
@@ -62,27 +91,6 @@ public class DataNodeFileServer extends Thread {
         } catch (IOException e) {
             logger.error("{} while start data node file server", e.getMessage());
             throw new HummerException("%s while start data node file server", e.getMessage());
-        }
-
-        this.server = server;
-        this.nameNodeRpcClient = nameNodeRpcClient;
-    }
-
-    @Override
-    public void run() {
-        while (!server.isClosing()) {
-            try {
-                selector.select();
-                Iterator<SelectionKey> keysIterator = selector.selectedKeys().iterator();
-
-                while (keysIterator.hasNext()) {
-                    SelectionKey key = keysIterator.next();
-                    keysIterator.remove();
-                    handleRequest(key);
-                }
-            } catch (Throwable e) {
-                logger.error("{} while handle request", e.getMessage());
-            }
         }
     }
 
@@ -239,7 +247,7 @@ public class DataNodeFileServer extends Thread {
      * @throws IOException IO异常
      */
     private String getFileOutPath(String fileName) throws IOException {
-        String[] fileNameSplit = fileName.split(PathUtils.getFileSeparator());
+        String[] fileNameSplit = fileName.split(PathUtils.getINodeSeparator());
 
         StringBuilder filePath = new StringBuilder(DataNodeConfig.getDataNodeDataPath());
         for (String s : fileNameSplit) {

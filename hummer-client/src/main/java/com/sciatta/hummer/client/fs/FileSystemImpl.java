@@ -2,6 +2,7 @@ package com.sciatta.hummer.client.fs;
 
 import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.core.transport.TransportStatus;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class FileSystemImpl implements FileSystem {
     @Override
     public boolean uploadFile(byte[] file, String fileName, long fileSize) {
         // 向元数据节点创建文件元数据
-        if (this.client.createFile(fileName) != 1) {    // TODO 通信代码
+        if (this.client.createFile(fileName) != TransportStatus.CreateFile.SUCCESS) {
             return false;
         }
 

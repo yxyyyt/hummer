@@ -3,6 +3,7 @@ package com.sciatta.hummer.client.rpc;
 import com.google.gson.reflect.TypeToken;
 import com.sciatta.hummer.client.config.FileSystemClientConfig;
 import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.rpc.*;
 import io.grpc.ManagedChannel;
@@ -78,7 +79,7 @@ public class NameNodeRpcClient {
 
         logger.debug("allocate dataNodes response status is " + response.getStatus());
 
-        if (response.getStatus() == 1) {
+        if (response.getStatus() == TransportStatus.AllocateDataNodes.SUCCESS) {
             return GsonUtils.fromJson(response.getDataNodes(), new TypeToken<List<DataNodeInfo>>() {
             }.getType());
         }

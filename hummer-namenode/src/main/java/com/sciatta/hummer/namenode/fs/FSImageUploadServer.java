@@ -412,6 +412,11 @@ public class FSImageUploadServer extends Thread {
         return true;
     }
 
+    /**
+     * 写本地镜像
+     *
+     * @throws IOException IO异常
+     */
     private void writeFSImage() throws IOException {
         FileChannel fileChannel = null;
 

@@ -2,14 +2,20 @@ package com.sciatta.hummer.client;
 
 import com.sciatta.hummer.client.fs.FileSystem;
 import com.sciatta.hummer.client.fs.FileSystemImpl;
+import com.sciatta.hummer.core.util.PathUtils;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -24,17 +30,22 @@ public class FileSystemTests {
         assertEquals(1, result);
     }
 
-//    @Test TODO
-//    public void testCreateFile() {
-//        FileSystem fileSystem = new FileSystemImpl();
-//        fileSystem.mkdir("/hummer/init");
-//
-//        for (int i = 0; i < 10; i++) {
-//            String fileName = "/hummer/init/" + (int) (Math.random() * 10) + ".test";
-//            int ans = fileSystem.createFile(fileName);
-//            System.out.println("[" + (i + 1) + "] create file " + fileName + " result is " + ans);
-//        }
-//    }
+    @Test
+    public void testUploadFile() throws IOException {
+        FileSystem fileSystem = new FileSystemImpl();
+        fileSystem.mkdir("/hummer/images");
+
+        byte[] bytes = Files.readAllBytes(getTestFile());
+        boolean ans = fileSystem.uploadFile(bytes, "/hummer/images/" + Math.random() + ".jpg", bytes.length);
+        assertTrue(ans);
+    }
+
+    private Path getTestFile() throws IOException {
+        String path = PathUtils.getUserHome() + PathUtils.getFileSeparator() +
+                "hummer" + PathUtils.getFileSeparator() +
+                "face.jpg";
+        return PathUtils.getPathAndCreateDirectoryIfNotExists(path);
+    }
 
     @Test
     public void testBatchMkdir() {

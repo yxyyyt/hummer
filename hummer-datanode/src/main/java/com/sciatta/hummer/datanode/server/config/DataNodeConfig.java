@@ -76,7 +76,8 @@ public class DataNodeConfig {
         return configManager.getStringConfig("DATA_NODE_DATA_PATH",
                 PathUtils.getPathWithSlashAtLast(getDataNodeRootPath()) +
                         "datas" + PathUtils.getFileSeparator() +
-                        getLocalHostname() + PathUtils.getFileSeparator());
+                        getLocalHostname() + PathUtils.getFileSeparator()) +
+                getLocalPort();
     }
 
     /**

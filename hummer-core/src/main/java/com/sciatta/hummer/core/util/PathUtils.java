@@ -43,6 +43,15 @@ public class PathUtils {
     }
 
     /**
+     * 获取文件目录树中节点分隔符
+     *
+     * @return 文件目录树中节点分隔符
+     */
+    public static String getINodeSeparator() {
+        return "/";
+    }
+
+    /**
      * 获取路径，如果路径所在目录不存在，则递归创建
      *
      * @param path 路径字符串

@@ -17,9 +17,14 @@ public class DataNodeInfo {
     private int port;
 
     /**
-     * 上一次心跳的时间
+     * 最近一次心跳的时间
      */
-    private long latestHeartbeatTime = System.currentTimeMillis();
+    private long latestHeartbeatTime;
+
+    /**
+     * 最近一次注册的时间
+     */
+    private long latestRegisterTime;
 
     /**
      * 已存储数据的大小
@@ -55,6 +60,14 @@ public class DataNodeInfo {
         this.latestHeartbeatTime = latestHeartbeatTime;
     }
 
+    public long getLatestRegisterTime() {
+        return latestRegisterTime;
+    }
+
+    public void setLatestRegisterTime(long latestRegisterTime) {
+        this.latestRegisterTime = latestRegisterTime;
+    }
+
     public long getStoredDataSize() {
         return storedDataSize;
     }
@@ -84,6 +97,7 @@ public class DataNodeInfo {
                 "hostname='" + hostname + '\'' +
                 ", port=" + port +
                 ", latestHeartbeatTime=" + latestHeartbeatTime +
+                ", latestRegisterTime=" + latestRegisterTime +
                 ", storedDataSize=" + storedDataSize +
                 '}';
     }

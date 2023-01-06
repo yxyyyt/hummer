@@ -2,7 +2,6 @@ package com.sciatta.hummer.core.fs.directory;
 
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.core.util.PathUtils;
-import com.sciatta.hummer.core.util.StringUtils;
 
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -27,7 +26,7 @@ public class FSDirectory {
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public FSDirectory() {
-        this.dirTree = new INodeDirectory("/");
+        this.dirTree = new INodeDirectory(PathUtils.getINodeSeparator());
     }
 
     public long getMaxTxId() {
@@ -103,7 +102,7 @@ public class FSDirectory {
     public void mkdir(long txId, String path) {
         writeLock();
         try {
-            String[] paths = path.split("/");
+            String[] paths = path.split(PathUtils.getINodeSeparator());
             INodeDirectory parent = dirTree;
 
             for (String childPath : paths) {
@@ -139,7 +138,7 @@ public class FSDirectory {
     public boolean createFile(long txId, String fileName) {
         writeLock();
         try {
-            String[] paths = fileName.split("/");
+            String[] paths = fileName.split(PathUtils.getINodeSeparator());
             INodeDirectory parent = dirTree;
 
             // 遍历父级目录是否存在

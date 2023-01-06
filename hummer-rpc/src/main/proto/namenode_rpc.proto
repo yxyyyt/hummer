@@ -13,6 +13,7 @@ service NameNodeService {
   rpc CreateFile(CreateFileRequest) returns (CreateFileResponse);
   rpc AllocateDataNodes(AllocateDataNodesRequest) returns(AllocateDataNodesResponse);
   rpc IncrementalReport(IncrementalReportRequest) returns(IncrementalReportResponse);
+  rpc FullReport(FullReportRequest) returns (FullReportResponse);
 }
 
 // Register
@@ -31,6 +32,7 @@ message HeartbeatRequest{
 }
 message HeartbeatResponse{
   int32 status = 1;
+  string remoteCommands = 2;
 }
 
 // Mkdir
@@ -84,5 +86,16 @@ message IncrementalReportRequest {
   string fileName = 3;
 }
 message IncrementalReportResponse{
+  int32 status = 1;
+}
+
+// FullReport
+message FullReportRequest {
+  string hostname = 1;
+  int32 port = 2;
+  string fileNames = 3;
+  int64 storedDataSize = 4;
+}
+message FullReportResponse{
   int32 status = 1;
 }

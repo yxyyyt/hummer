@@ -90,22 +90,24 @@ public abstract class AbstractServer implements Server {
 
         doClose();
 
-        // 唤醒等待服务
-        leave();
-
         CLOSED.set(true);
 
         logger.info("{} closed", AbstractServer.this.getClass().getSimpleName());
+
+        // 唤醒等待服务
+        leave();
     }
 
     @Override
     public final void keep() {
-        LOCK.lock();
-        try {
-            KEEPER.await();
-        } catch (InterruptedException ignore) {
-        } finally {
-            LOCK.unlock();
+        while (!CLOSED.get()) {
+            LOCK.lock();
+            try {
+                KEEPER.await();
+            } catch (InterruptedException ignore) {
+            } finally {
+                LOCK.unlock();
+            }
         }
     }
 

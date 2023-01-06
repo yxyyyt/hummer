@@ -1,6 +1,7 @@
 package com.sciatta.hummer.datanode.server.server;
 
 import com.sciatta.hummer.core.server.AbstractServer;
+import com.sciatta.hummer.datanode.server.data.DataNodeManager;
 import com.sciatta.hummer.datanode.server.fs.DataNodeFileServer;
 import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
 import org.slf4j.Logger;
@@ -18,27 +19,18 @@ public class DataNodeServer extends AbstractServer {
 
     private final NameNodeRpcClient nameNodeRpcClient;
     private final DataNodeFileServer dataNodeFileServer;
+    private final DataNodeManager dataNodeManager;
 
     public DataNodeServer() {
         super();
 
-        this.nameNodeRpcClient = new NameNodeRpcClient(this);
+        this.nameNodeRpcClient = new NameNodeRpcClient();
         this.dataNodeFileServer = new DataNodeFileServer(this, nameNodeRpcClient);
+        this.dataNodeManager = new DataNodeManager(this.nameNodeRpcClient, this);
     }
 
     @Override
     protected void doStart() throws IOException {
-        // 发起注册
-        try {
-            this.nameNodeRpcClient.register();
-        } catch (InterruptedException e) {
-            logger.error("{} while send registration to name node", e.getMessage());
-            throw new IOException(e);
-        }
-
-        // 发送心跳
-        this.nameNodeRpcClient.heartbeat();
-
         // 启动数据节点文件服务
         this.dataNodeFileServer.start();
     }

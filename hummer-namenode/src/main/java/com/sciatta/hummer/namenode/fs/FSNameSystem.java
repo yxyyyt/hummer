@@ -1,6 +1,5 @@
 package com.sciatta.hummer.namenode.fs;
 
-import com.sciatta.hummer.core.data.DataNodeInfo;
 import com.sciatta.hummer.core.fs.AbstractFSNameSystem;
 import com.sciatta.hummer.core.fs.directory.FSImage;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
@@ -12,7 +11,6 @@ import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.core.util.PathUtils;
 import com.sciatta.hummer.core.util.StringUtils;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
-import io.netty.util.internal.ConcurrentSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,10 +18,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_MAX_TX_ID;
 import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_TIMESTAMP;
@@ -35,11 +32,6 @@ import static com.sciatta.hummer.core.runtime.RuntimeParameter.LAST_CHECKPOINT_T
  */
 public class FSNameSystem extends AbstractFSNameSystem {
     private static final Logger logger = LoggerFactory.getLogger(FSNameSystem.class);
-
-    /**
-     * 每个文件对应的副本所在的数据节点
-     */
-    private final ConcurrentMap<String, Set<DataNodeInfo>> replicasByFileName = new ConcurrentHashMap<>();
 
     public FSNameSystem(Server server) {
         super(server);
@@ -88,26 +80,6 @@ public class FSNameSystem extends AbstractFSNameSystem {
 
         this.fsEditLog.logEdit(editLog);    // TODO 如果先写日志，再创建元数据；如果创建元数据失败，可能会存在大量冗余日志，如何防范异常攻击？
         return this.fsDirectory.createFile(editLog.getTxId(), fileName);
-    }
-
-    /**
-     * 数据节点文件增量上报
-     *
-     * @param dataNode 数据节点
-     * @param fileName 文件名
-     * @return 是否增量上报成功；true，增量上报成功；否则，增量上报失败
-     */
-    public boolean incrementalReport(DataNodeInfo dataNode, String fileName) {
-        Set<DataNodeInfo> dataNodes = replicasByFileName.get(fileName);
-        if (dataNodes == null) {
-            dataNodes = replicasByFileName.putIfAbsent(fileName, new HashSet<>());
-        }
-
-        synchronized (Objects.requireNonNull(dataNodes)) {
-            dataNodes.add(dataNode);
-        }
-
-        return true;
     }
 
     /**

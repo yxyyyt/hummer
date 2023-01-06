@@ -1,12 +1,19 @@
 package com.sciatta.hummer.datanode.server.rpc;
 
-import com.sciatta.hummer.core.server.Server;
+import com.google.gson.reflect.TypeToken;
+import com.sciatta.hummer.core.transport.Command;
+import com.sciatta.hummer.core.transport.TransportStatus;
+import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
+import com.sciatta.hummer.datanode.server.fs.StorageInfo;
 import com.sciatta.hummer.rpc.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import org.omg.CORBA.TRANSACTION_MODE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Created by Rain on 2023/1/2<br>
@@ -17,34 +24,64 @@ public class NameNodeRpcClient {
     private static final Logger logger = LoggerFactory.getLogger(NameNodeRpcClient.class);
 
     private final NameNodeServiceGrpc.NameNodeServiceBlockingStub nameNodeServiceGrpc;
-    private final Server server;
 
-    public NameNodeRpcClient(Server server) {
+    public NameNodeRpcClient() {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(
                         DataNodeConfig.getNameNodeRpcHost(), DataNodeConfig.getNameNodeRpcPort())
                 .usePlaintext()
                 .build();
 
         this.nameNodeServiceGrpc = NameNodeServiceGrpc.newBlockingStub(channel);
-        this.server = server;
     }
 
     /**
-     * 向元数据节点发起注册
+     * 向元数据节点发送注册请求
+     *
+     * @return 注册响应状态
      */
-    public void heartbeat() {
-        HeartbeatThread heartbeatThread = new HeartbeatThread();
-        heartbeatThread.start();
+    public int register() {
+        logger.debug("send request to name node for registration");
+
+        RegisterRequest request = RegisterRequest.newBuilder()
+                .setHostname(DataNodeConfig.getLocalHostname())
+                .setPort(DataNodeConfig.getLocalPort())
+                .build();
+
+        RegisterResponse response = nameNodeServiceGrpc.register(request);
+        logger.debug("receive registration response from name node, status is {}", response.getStatus());
+
+        return response.getStatus();
     }
 
     /**
-     * 向元数据节点发送心跳
+     * 向元数据节点发送心跳请求
+     *
+     * @param commands 命名集合
+     * @return 心跳响应状态
      */
-    public void register() throws InterruptedException {
-        RegisterThread registerThread = new RegisterThread();
-        registerThread.start();
-        registerThread.join();
+    public int heartbeat(List<Command> commands) {
+        logger.debug("send request to name node for heartbeat");
+
+        HeartbeatRequest request = HeartbeatRequest.newBuilder()
+                .setHostname(DataNodeConfig.getLocalHostname())
+                .setPort(DataNodeConfig.getLocalPort())
+                .build();
+
+        try {
+            HeartbeatResponse response = nameNodeServiceGrpc.heartbeat(request);
+            commands.addAll(GsonUtils.fromJson(response.getRemoteCommands(), new TypeToken<List<Command>>() {
+            }.getType()));
+
+            logger.debug("receive heartbeat response from name node, status is {}, commands is {}",
+                    response.getStatus(), commands);
+
+            return response.getStatus();
+        } catch (Throwable e) {
+            logger.error("{} while heartbeat to name node", e.getMessage());
+            return TransportStatus.HeartBeat.FAIL;
+        }
     }
+
 
     /**
      * 向元数据节点增量上报文件存储信息
@@ -52,7 +89,7 @@ public class NameNodeRpcClient {
      * @param fileName 文件名
      */
     public void incrementalReport(String fileName) {
-        logger.debug("send request to name node for incremental report");
+        logger.debug("send file name {} to name node for incremental report", fileName);
 
         IncrementalReportRequest request = IncrementalReportRequest.newBuilder()
                 .setHostname(DataNodeConfig.getLocalHostname())
@@ -66,49 +103,24 @@ public class NameNodeRpcClient {
     }
 
     /**
-     * 向元数据节点发起注册的线程
+     * 向元数据节点全量上报文件存储信息
+     *
+     * @param storageInfo 存储信息
+     * @return 全量上报文件存储信息响应状态
      */
-    private class RegisterThread extends Thread {
-        @Override
-        public void run() {
-            logger.debug("send request to name node for registration");
+    public int fullReport(StorageInfo storageInfo) {
+        logger.debug("send storage info {} to name node for full report", storageInfo);
 
-            RegisterRequest request = RegisterRequest.newBuilder()
-                    .setHostname(DataNodeConfig.getLocalHostname())
-                    .setPort(DataNodeConfig.getLocalPort())
-                    .build();
+        FullReportRequest request = FullReportRequest.newBuilder()
+                .setHostname(DataNodeConfig.getLocalHostname())
+                .setPort(DataNodeConfig.getLocalPort())
+                .setFileNames(GsonUtils.toJson(storageInfo.getFileNames()))
+                .setStoredDataSize(storageInfo.getStoredDataSize())
+                .build();
 
-            RegisterResponse response = nameNodeServiceGrpc.register(request);
+        FullReportResponse response = nameNodeServiceGrpc.fullReport(request);
+        logger.debug("receive full report response from name node, status is {}", response.getStatus());
 
-            logger.debug("receive registration response from name node, status is {}", response.getStatus());
-        }
-    }
-
-    /**
-     * 向元数据节点发送心跳的线程
-     */
-    private class HeartbeatThread extends Thread {
-
-        @Override
-        public void run() {
-            while (!server.isClosing()) {
-                logger.debug("send request to name node for heartbeat");
-
-                HeartbeatRequest request = HeartbeatRequest.newBuilder()
-                        .setHostname(DataNodeConfig.getLocalHostname())
-                        .setPort(DataNodeConfig.getLocalPort())
-                        .build();
-
-                HeartbeatResponse response = nameNodeServiceGrpc.heartbeat(request);
-
-                logger.debug("receive heartbeat response from name node, status is {}", response.getStatus());
-
-                try {
-                    Thread.sleep(DataNodeConfig.getHeartbeatInterval());
-                } catch (InterruptedException e) {
-                    logger.error("{} exception while wait to send heartbeat request", e.getMessage());
-                }
-            }
-        }
+        return response.getStatus();
     }
 }

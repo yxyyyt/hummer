@@ -2,6 +2,8 @@ package com.sciatta.hummer.namenode.data;
 
 import com.sciatta.hummer.core.data.DataNodeInfo;
 import com.sciatta.hummer.core.server.Server;
+import com.sciatta.hummer.core.transport.TransportStatus;
+import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import com.sciatta.hummer.namenode.data.allocate.DataNodeAllocator;
 import com.sciatta.hummer.namenode.data.allocate.impl.StoredDataSizeAllocator;
 import org.slf4j.Logger;
@@ -9,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -19,9 +22,19 @@ public class DataNodeManager {
     private static final Logger logger = LoggerFactory.getLogger(DataNodeManager.class);
 
     /**
-     * 数据节点缓存
+     * 可用数据节点缓存
      */
-    private final Map<String, DataNodeInfo> aliveDataNodes = new ConcurrentHashMap<>();
+    private final Map<String, DataNodeInfo> availableDataNodes = new ConcurrentHashMap<>();
+
+    /**
+     * 不可用数据节点缓存
+     */
+    private final Map<String, DataNodeInfo> unavailableDataNodes = new ConcurrentHashMap<>();
+
+    /**
+     * 每个文件对应的副本所在的数据节点
+     */
+    private final ConcurrentMap<String, Set<DataNodeInfo>> fileNameToDataNodeCache = new ConcurrentHashMap<>();
 
     private final DataNodeAliveMonitor dataNodeAliveMonitor;
     private final DataNodeAllocator dataNodeAllocator;
@@ -40,28 +53,41 @@ public class DataNodeManager {
     }
 
     /**
-     * 数据节点是否可用
-     *
-     * @param hostname 数据节点主机名
-     * @param port     数据节点端口
-     * @return 如果可用，返回数据节点；否则，返回null
-     */
-    public DataNodeInfo isAlive(String hostname, int port) {
-        return aliveDataNodes.get(DataNodeInfo.uniqueKey(hostname, port));
-    }
-
-    /**
      * 数据节点发起注册
      *
      * @param hostname 数据节点主机名
      * @param port     数据节点端口
-     * @return 是否注册成功；true，注册成功；否则，注册失败
+     * @return 注册状态 {@link TransportStatus.Register}
      */
-    public boolean register(String hostname, int port) {
-        DataNodeInfo datanode = new DataNodeInfo(hostname, port);
-        aliveDataNodes.put(DataNodeInfo.uniqueKey(hostname, port), datanode);
-        logger.debug("data node {}:{} register success", hostname, port);
-        return true;
+    public int register(String hostname, int port) {
+        String uniqueKey = DataNodeInfo.uniqueKey(hostname, port);
+
+        DataNodeInfo dataNode = availableDataNodes.get(uniqueKey);
+        // 已注册且可用
+        if (dataNode != null) {
+            logger.debug("data node {}:{} has registered and available, latest register time {}", hostname,
+                    port, dataNode.getLatestRegisterTime());
+            return TransportStatus.Register.REGISTERED;
+        }
+
+        dataNode = unavailableDataNodes.get(uniqueKey);
+        // 已注册且不可用
+        if (dataNode != null) {
+            unavailableDataNodes.remove(uniqueKey);
+            dataNode.setLatestRegisterTime(System.currentTimeMillis());
+            availableDataNodes.put(uniqueKey, dataNode);
+            logger.debug("data node {}:{} has registered, but not available, update register time {}", hostname,
+                    port, dataNode.getLatestRegisterTime());
+            return TransportStatus.Register.SUCCESS;
+        }
+
+        // 新注册
+        dataNode = new DataNodeInfo(hostname, port);
+        dataNode.setLatestRegisterTime(System.currentTimeMillis());
+        availableDataNodes.put(uniqueKey, dataNode);
+        logger.debug("data node {}:{} register success, register time {}", hostname, port,
+                dataNode.getLatestRegisterTime());
+        return TransportStatus.Register.SUCCESS;
     }
 
     /**
@@ -69,17 +95,31 @@ public class DataNodeManager {
      *
      * @param hostname 数据节点主机名
      * @param port     数据节点端口
-     * @return 是否心跳成功；true，心跳成功；否则，心跳失败
+     * @return 心跳状态 {@link TransportStatus.HeartBeat}
      */
-    public boolean heartbeat(String hostname, int port) {
-        DataNodeInfo datanode = isAlive(hostname, port);
-        if (datanode == null) {
-            return false;
+    public int heartbeat(String hostname, int port) {
+        String uniqueKey = DataNodeInfo.uniqueKey(hostname, port);
+
+        DataNodeInfo dataNode = availableDataNodes.get(uniqueKey);
+        // 已注册且可用
+        if (dataNode != null) {
+            dataNode.setLatestHeartbeatTime(System.currentTimeMillis());
+            logger.debug("data node {}:{} has registered and available, update heartbeat time {}", hostname,
+                    port, dataNode.getLatestHeartbeatTime());
+            return TransportStatus.Register.SUCCESS;
         }
 
-        datanode.setLatestHeartbeatTime(System.currentTimeMillis());
-        logger.debug("data node {}:{} register success", hostname, port);
-        return true;
+        dataNode = unavailableDataNodes.get(uniqueKey);
+        // 已注册且不可用
+        if (dataNode != null) {
+            logger.debug("data node {}:{} has registered, but not available, latest heartbeat time {}", hostname,
+                    port, dataNode.getLatestHeartbeatTime());
+            return TransportStatus.HeartBeat.NOT_REGISTERED;
+        }
+
+        // 未注册
+        logger.debug("data node {}:{} has not registered", hostname, port);
+        return TransportStatus.HeartBeat.NOT_REGISTERED;
     }
 
     /**
@@ -89,11 +129,65 @@ public class DataNodeManager {
      * @return 已成功分配的数据节点
      */
     public List<DataNodeInfo> allocateDataNodes(long fileSize) {
-        List<DataNodeInfo> dataNodes = this.dataNodeAllocator.allocateDataNodes(this.aliveDataNodes);
+        List<DataNodeInfo> dataNodes = this.dataNodeAllocator.allocateDataNodes(this.availableDataNodes);
 
         dataNodes.forEach(d -> d.addStoredDataSize(fileSize));
 
         return Collections.unmodifiableList(dataNodes);
+    }
+
+    /**
+     * 数据节点文件增量上报
+     *
+     * @param hostname 数据节点主机名
+     * @param port     数据节点端口
+     * @param fileName 文件名
+     * @return 是否增量上报成功；true，增量上报成功；否则，增量上报失败
+     */
+    public boolean incrementalReport(String hostname, int port, String fileName) {
+        DataNodeInfo dataNode = this.availableDataNodes.get(DataNodeInfo.uniqueKey(hostname, port));
+        if (dataNode == null) return false;
+
+        Set<DataNodeInfo> dataNodes = fileNameToDataNodeCache.get(fileName);
+        if (dataNodes == null) {
+            fileNameToDataNodeCache.putIfAbsent(fileName, new HashSet<>());
+            dataNodes = fileNameToDataNodeCache.get(fileName);
+        }
+
+        synchronized (Objects.requireNonNull(dataNodes)) {
+            dataNodes.add(dataNode);
+        }
+
+        return true;
+    }
+
+    /**
+     * 数据节点文件全量上报
+     *
+     * @param hostname       数据节点主机名
+     * @param port           数据节点端口
+     * @param fileNames      数据节点上的所有文件名
+     * @param storedDataSize 已存储数据的大小
+     * @return 是否全量上报成功；true，全量上报成功；否则，全量上报失败
+     */
+    public boolean fullReport(String hostname, int port, List<String> fileNames, long storedDataSize) {
+        DataNodeInfo dataNode = this.availableDataNodes.get(DataNodeInfo.uniqueKey(hostname, port));
+        if (dataNode == null) return false;
+
+        Map<String, Set<DataNodeInfo>> temp = new HashMap<>();
+        for (String fileName : fileNames) {
+            Set<DataNodeInfo> dataNodes = temp.get(fileName);
+            if (dataNodes == null) {
+                temp.putIfAbsent(fileName, new HashSet<>());
+                dataNodes = temp.get(fileName);
+            }
+            dataNodes.add(dataNode);
+        }
+        fileNameToDataNodeCache.putAll(temp);
+
+        dataNode.setStoredDataSize(storedDataSize);
+
+        return true;
     }
 
     /**
@@ -105,27 +199,29 @@ public class DataNodeManager {
         public void run() {
             try {
                 while (!server.isClosing()) {
-                    List<String> toRemoveDataNodes = new ArrayList<>();
-
-                    Iterator<DataNodeInfo> dataNodeInfoIterator = aliveDataNodes.values().iterator();
-                    DataNodeInfo datanode;
-                    while (dataNodeInfoIterator.hasNext()) {
-                        datanode = dataNodeInfoIterator.next();
-                        if (System.currentTimeMillis() - datanode.getLatestHeartbeatTime() > 90 * 1000) {   // TODO to config
-                            toRemoveDataNodes.add(DataNodeInfo.uniqueKey(datanode.getHostname(), datanode.getPort()));
+                    List<DataNodeInfo> toRemovedDataNodes = new ArrayList<>();
+                    for (DataNodeInfo dataNode : availableDataNodes.values()) {
+                        if (System.currentTimeMillis() - dataNode.getLatestHeartbeatTime() >
+                                NameNodeConfig.getUnavailableDataNodeHeartbeatInterval()) {
+                            toRemovedDataNodes.add(dataNode);
                         }
                     }
 
-                    if (!toRemoveDataNodes.isEmpty()) {
-                        for (String toRemoveDatanode : toRemoveDataNodes) {
-                            aliveDataNodes.remove(toRemoveDatanode);
+                    if (!toRemovedDataNodes.isEmpty()) {
+                        for (DataNodeInfo toRemovedDataNode : toRemovedDataNodes) {
+                            String uniqueKey = DataNodeInfo.uniqueKey(toRemovedDataNode.getHostname(), toRemovedDataNode.getPort());
+                            unavailableDataNodes.put(uniqueKey, availableDataNodes.remove(uniqueKey));
                         }
+                        logger.debug("{} removed from available data node cache", toRemovedDataNodes);
                     }
 
-                    Thread.sleep(30 * 1000);    // TODO to config
+                    logger.debug("current available data node {}, current unAvailable data node {}",
+                            availableDataNodes, unavailableDataNodes);
+
+                    Thread.sleep(NameNodeConfig.getDataNodeAliveMonitorInterval());
                 }
             } catch (Exception e) {
-                e.printStackTrace();    // TODO log and exception
+                logger.error("{} while data node alive monitor run", e.getMessage());
             }
         }
 

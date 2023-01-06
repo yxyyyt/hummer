@@ -106,4 +106,22 @@ public final class NameNodeConfig {
     public static int getNumberOfReplicated() {
         return configManager.getIntConfig("NUMBER_OF_REPLICATED", 2);
     }
+
+    /**
+     * 获取数据节点存活状态检查监控间隔
+     *
+     * @return 数据节点存活状态检查监控间隔
+     */
+    public static int getDataNodeAliveMonitorInterval() {
+        return configManager.getIntConfig("data.node.alive.monitor.interval", 30 * 1000);
+    }
+
+    /**
+     * 获取不可用数据节点心跳间隔
+     *
+     * @return 不可用数据节点心跳间隔
+     */
+    public static int getUnavailableDataNodeHeartbeatInterval() {
+        return configManager.getIntConfig("unavailable.data.node.heartbeat.interval", 90 * 1000);
+    }
 }

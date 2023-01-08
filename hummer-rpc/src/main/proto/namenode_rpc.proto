@@ -14,6 +14,7 @@ service NameNodeService {
   rpc AllocateDataNodes(AllocateDataNodesRequest) returns(AllocateDataNodesResponse);
   rpc IncrementalReport(IncrementalReportRequest) returns(IncrementalReportResponse);
   rpc FullReport(FullReportRequest) returns (FullReportResponse);
+  rpc GetDataNodeForFile(GetDataNodeForFileRequest) returns (GetDataNodeForFileResponse);
 }
 
 // Register
@@ -98,4 +99,13 @@ message FullReportRequest {
 }
 message FullReportResponse{
   int32 status = 1;
+}
+
+// GetDataNodeForFile
+message GetDataNodeForFileRequest{
+  string fileName = 1;
+}
+message GetDataNodeForFileResponse{
+  string dataNodeInfo = 1;
+  int32 status = 2;
 }

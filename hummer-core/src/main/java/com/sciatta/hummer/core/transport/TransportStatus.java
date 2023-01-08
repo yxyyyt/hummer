@@ -99,5 +99,12 @@ public final class TransportStatus {
 
     }
 
+    /**
+     * 获得存储文件所在的数据节点状态
+     */
+    public static final class GetDataNodeForFile extends Common {
+
+    }
+
 
 }

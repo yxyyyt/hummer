@@ -43,7 +43,7 @@ public class NameNodeRpcClient {
         MkdirRequest request = MkdirRequest.newBuilder().setPath(path).build();
         MkdirResponse response = nameNodeServiceGrpc.mkdir(request);
 
-        logger.debug("mkdir response status is " + response.getStatus());
+        logger.debug("mkdir response status is {}", response.getStatus());
 
         return response.getStatus();
     }
@@ -58,7 +58,7 @@ public class NameNodeRpcClient {
         CreateFileRequest request = CreateFileRequest.newBuilder().setFileName(fileName).build();
         CreateFileResponse response = nameNodeServiceGrpc.createFile(request);
 
-        logger.debug("create file response status is " + response.getStatus());
+        logger.debug("create file response status is {}", response.getStatus());
 
         return response.getStatus();
     }
@@ -77,11 +77,33 @@ public class NameNodeRpcClient {
                 .build();
         AllocateDataNodesResponse response = nameNodeServiceGrpc.allocateDataNodes(request);
 
-        logger.debug("allocate dataNodes response status is " + response.getStatus());
+        logger.debug("allocate dataNodes response status is {}", response.getStatus());
 
         if (response.getStatus() == TransportStatus.AllocateDataNodes.SUCCESS) {
             return GsonUtils.fromJson(response.getDataNodes(), new TypeToken<List<DataNodeInfo>>() {
             }.getType());
+        }
+
+        return null;
+    }
+
+    /**
+     * 获得存储文件所在的数据节点
+     *
+     * @param fileName 文件名
+     * @return 存储文件所在的数据节点；若不存在，返回null
+     */
+    public DataNodeInfo getDataNodeForFile(String fileName) {
+        GetDataNodeForFileRequest request = GetDataNodeForFileRequest.newBuilder()
+                .setFileName(fileName)
+                .build();
+
+        GetDataNodeForFileResponse response = nameNodeServiceGrpc.getDataNodeForFile(request);
+
+        logger.debug("get data node for file status is {}", response.getStatus());
+
+        if (response.getStatus() == TransportStatus.GetDataNodeForFile.SUCCESS) {
+            return GsonUtils.fromJson(response.getDataNodeInfo(), DataNodeInfo.class);
         }
 
         return null;
@@ -97,7 +119,7 @@ public class NameNodeRpcClient {
         ShutdownRequest request = ShutdownRequest.newBuilder().setCode(1).build();
         ShutdownResponse response = nameNodeServiceGrpc.shutdown(request);
 
-        logger.debug("shutdown response status is " + response.getStatus());
+        logger.debug("shutdown response status is {}", response.getStatus());
 
         return response.getStatus();
     }

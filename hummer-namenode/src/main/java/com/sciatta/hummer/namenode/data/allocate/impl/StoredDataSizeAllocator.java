@@ -17,9 +17,9 @@ public class StoredDataSizeAllocator implements DataNodeAllocator {
     private static final Logger logger = LoggerFactory.getLogger(StoredDataSizeAllocator.class);
 
     @Override
-    public List<DataNodeInfo> allocateDataNodes(Map<String, DataNodeInfo> aliveDataNodes) {
+    public List<DataNodeInfo> allocateDataNodes(Map<String, DataNodeInfo> availableDataNodes) {
         List<DataNodeInfo> selectedDataNodes = new ArrayList<>(NameNodeConfig.getNumberOfReplicated());
-        List<DataNodeInfo> dataNodes = new ArrayList<>(aliveDataNodes.values());
+        List<DataNodeInfo> dataNodes = new ArrayList<>(availableDataNodes.values());
 
         if (dataNodes.size() < NameNodeConfig.getNumberOfReplicated()) {
             logger.warn("current the number of can be allocated dataNodes {} less than NUMBER_OF_REPLICATED {}",

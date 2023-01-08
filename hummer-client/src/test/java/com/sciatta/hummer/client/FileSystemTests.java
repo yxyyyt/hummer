@@ -2,6 +2,7 @@ package com.sciatta.hummer.client;
 
 import com.sciatta.hummer.client.fs.FileSystem;
 import com.sciatta.hummer.client.fs.FileSystemImpl;
+import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.util.PathUtils;
 import org.junit.Test;
 
@@ -26,25 +27,46 @@ public class FileSystemTests {
     @Test
     public void testMkdir() {
         FileSystem fileSystem = new FileSystemImpl();
-        int result = fileSystem.mkdir("/hummer/init");
-        assertEquals(1, result);
+
+        int result = fileSystem.mkdir("/hummer/images");
+
+        assertEquals(TransportStatus.Mkdir.SUCCESS, result);
     }
 
     @Test
     public void testUploadFile() throws IOException {
         FileSystem fileSystem = new FileSystemImpl();
-        fileSystem.mkdir("/hummer/images");
 
-        byte[] bytes = Files.readAllBytes(getTestFile());
-        boolean ans = fileSystem.uploadFile(bytes, "/hummer/images/" + Math.random() + ".jpg", bytes.length);
+        byte[] bytes = Files.readAllBytes(getUploadFile());
+        boolean ans = fileSystem.uploadFile(bytes, "/hummer/images/face.jpg", bytes.length);
+
         assertTrue(ans);
     }
 
-    private Path getTestFile() throws IOException {
+    @Test
+    public void testDownloadFile() throws IOException {
+        FileSystem fileSystem = new FileSystemImpl();
+
+        byte[] bytes = fileSystem.downloadFile("/hummer/images/face.jpg");
+        putDownloadFile(bytes);
+    }
+
+    private Path getUploadFile() throws IOException {
         String path = PathUtils.getUserHome() + PathUtils.getFileSeparator() +
                 "hummer" + PathUtils.getFileSeparator() +
+                "upload" + PathUtils.getFileSeparator() +
                 "face.jpg";
         return PathUtils.getPathAndCreateDirectoryIfNotExists(path);
+    }
+
+    public void putDownloadFile(byte[] bytes) throws IOException {
+        String path = PathUtils.getUserHome() + PathUtils.getFileSeparator() +
+                "hummer" + PathUtils.getFileSeparator() +
+                "download" + PathUtils.getFileSeparator() +
+                "myface.jpg";
+
+        Path pathAndCreateDirectoryIfNotExists = PathUtils.getPathAndCreateDirectoryIfNotExists(path);
+        Files.write(pathAndCreateDirectoryIfNotExists, bytes);
     }
 
     @Test

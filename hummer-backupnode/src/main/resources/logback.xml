@@ -3,7 +3,7 @@
 <!-- scanPeriod：可以设置单位milliseconds, seconds, minutes，hours -->
 <configuration scan="true" scanPeriod="60 seconds" debug="false">
     <!-- 定义参数常量，便于后面直接用${name}来获取value值 -->
-    <property name="logPattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%-5level] %logger{50} - %msg%n"/>
+    <property name="logPattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%-5level] %class{36}.%M %L - %msg%n"/>
     <property name="logLevel" value="debug"/>
     <property name="logFilePath" value="D:/data/hummer/logs/backupnode"/>
     <property name="logMaxHistory" value="30"/>

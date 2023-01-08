@@ -268,6 +268,32 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         responseObserver.onCompleted();
     }
 
+    @Override
+    public void getDataNodeForFile(GetDataNodeForFileRequest request, StreamObserver<GetDataNodeForFileResponse> responseObserver) {
+        GetDataNodeForFileResponse response;
+
+        if (!server.isStarted() || server.isClosing()) {
+            response = GetDataNodeForFileResponse.newBuilder().setStatus(TransportStatus.GetDataNodeForFile.FAIL).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        DataNodeInfo dataNodeForFile = this.dataNodeManager.getDataNodeForFile(request.getFileName());
+
+        if (dataNodeForFile == null) {
+            response = GetDataNodeForFileResponse.newBuilder().setStatus(TransportStatus.GetDataNodeForFile.FAIL).build();
+        } else {
+            response = GetDataNodeForFileResponse.newBuilder()
+                    .setDataNodeInfo(GsonUtils.toJson(dataNodeForFile))
+                    .setStatus(TransportStatus.GetDataNodeForFile.SUCCESS)
+                    .build();
+        }
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
     // TODO 重构 请求处理分发器
 
     /**

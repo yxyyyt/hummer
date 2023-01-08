@@ -6,12 +6,15 @@ import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import com.sciatta.hummer.namenode.data.allocate.DataNodeAllocator;
 import com.sciatta.hummer.namenode.data.allocate.impl.StoredDataSizeAllocator;
+import com.sciatta.hummer.namenode.data.select.DataNodeSelector;
+import com.sciatta.hummer.namenode.data.select.impl.RandomDataNodeSelector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -38,6 +41,7 @@ public class DataNodeManager {
 
     private final DataNodeAliveMonitor dataNodeAliveMonitor;
     private final DataNodeAllocator dataNodeAllocator;
+    private final DataNodeSelector dataNodeSelector;
 
     private final Server server;
 
@@ -45,6 +49,7 @@ public class DataNodeManager {
         // 启动数据节点存活状态检查监控线程
         this.dataNodeAliveMonitor = new DataNodeAliveMonitor();
         this.dataNodeAllocator = new StoredDataSizeAllocator();
+        this.dataNodeSelector = new RandomDataNodeSelector();
         this.server = server;
     }
 
@@ -139,6 +144,21 @@ public class DataNodeManager {
     }
 
     /**
+     * 获得存储文件所在的数据节点
+     *
+     * @param fileName 文件名
+     * @return 存储文件所在的数据节点
+     */
+    public DataNodeInfo getDataNodeForFile(String fileName) {
+        Set<DataNodeInfo> dataNodeInfos = this.fileNameToDataNodeCache.get(fileName);
+        if (dataNodeInfos == null || dataNodeInfos.size() == 0) {
+            return null;
+        }
+
+        return dataNodeSelector.selectDataNode(dataNodeInfos);
+    }
+
+    /**
      * 数据节点文件增量上报
      *
      * @param hostname 数据节点主机名
@@ -150,15 +170,7 @@ public class DataNodeManager {
         DataNodeInfo dataNode = this.availableDataNodes.get(DataNodeInfo.uniqueKey(hostname, port));
         if (dataNode == null) return false;
 
-        Set<DataNodeInfo> dataNodes = fileNameToDataNodeCache.get(fileName);
-        if (dataNodes == null) {
-            fileNameToDataNodeCache.putIfAbsent(fileName, new HashSet<>());
-            dataNodes = fileNameToDataNodeCache.get(fileName);
-        }
-
-        synchronized (Objects.requireNonNull(dataNodes)) {
-            dataNodes.add(dataNode);
-        }
+        putFileNameToDataNodeCache(fileName, dataNode);
 
         return true;
     }
@@ -176,20 +188,28 @@ public class DataNodeManager {
         DataNodeInfo dataNode = this.availableDataNodes.get(DataNodeInfo.uniqueKey(hostname, port));
         if (dataNode == null) return false;
 
-        Map<String, Set<DataNodeInfo>> temp = new HashMap<>();
         for (String fileName : fileNames) {
-            Set<DataNodeInfo> dataNodes = temp.get(fileName);
-            if (dataNodes == null) {
-                temp.putIfAbsent(fileName, new HashSet<>());
-                dataNodes = temp.get(fileName);
-            }
-            dataNodes.add(dataNode);
+            putFileNameToDataNodeCache(fileName, dataNode);
         }
-        fileNameToDataNodeCache.putAll(temp);
 
         dataNode.setStoredDataSize(storedDataSize);
 
         return true;
+    }
+
+    /**
+     * 设置文件对应的副本所在的数据节点
+     * @param fileName 文件名
+     * @param dataNode 文件对应的副本所在的数据节点
+     */
+    private void putFileNameToDataNodeCache(String fileName, DataNodeInfo dataNode) {
+        Set<DataNodeInfo> dataNodes = fileNameToDataNodeCache.get(fileName);
+        if (dataNodes == null) {
+            fileNameToDataNodeCache.putIfAbsent(fileName, new CopyOnWriteArraySet<>());
+            dataNodes = fileNameToDataNodeCache.get(fileName);
+        }
+
+        dataNodes.add(dataNode);
     }
 
     /**

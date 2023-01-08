@@ -25,6 +25,14 @@ public interface FileSystem {
     boolean uploadFile(byte[] file, String fileName, long fileSize);
 
     /**
+     * 下载文件
+     *
+     * @param filename 文件名
+     * @return 文件字节数组
+     */
+    byte[] downloadFile(String filename);
+
+    /**
      * 优雅停机
      *
      * @return 停机是否成功

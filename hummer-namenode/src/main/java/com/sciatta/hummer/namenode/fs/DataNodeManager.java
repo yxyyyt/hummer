@@ -1,13 +1,13 @@
-package com.sciatta.hummer.namenode.data;
+package com.sciatta.hummer.namenode.fs;
 
-import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.core.fs.DataNodeInfo;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
-import com.sciatta.hummer.namenode.data.allocate.DataNodeAllocator;
-import com.sciatta.hummer.namenode.data.allocate.impl.StoredDataSizeAllocator;
-import com.sciatta.hummer.namenode.data.select.DataNodeSelector;
-import com.sciatta.hummer.namenode.data.select.impl.RandomDataNodeSelector;
+import com.sciatta.hummer.namenode.fs.allocate.DataNodeAllocator;
+import com.sciatta.hummer.namenode.fs.allocate.impl.StoredDataSizeAllocator;
+import com.sciatta.hummer.namenode.fs.select.DataNodeSelectorForFile;
+import com.sciatta.hummer.namenode.fs.select.impl.RandomDataNodeSelectorForFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +41,7 @@ public class DataNodeManager {
 
     private final DataNodeAliveMonitor dataNodeAliveMonitor;
     private final DataNodeAllocator dataNodeAllocator;
-    private final DataNodeSelector dataNodeSelector;
+    private final DataNodeSelectorForFile dataNodeSelectorForFile;
 
     private final Server server;
 
@@ -49,7 +49,7 @@ public class DataNodeManager {
         // 启动数据节点存活状态检查监控线程
         this.dataNodeAliveMonitor = new DataNodeAliveMonitor();
         this.dataNodeAllocator = new StoredDataSizeAllocator();
-        this.dataNodeSelector = new RandomDataNodeSelector();
+        this.dataNodeSelectorForFile = new RandomDataNodeSelectorForFile();
         this.server = server;
     }
 
@@ -155,7 +155,7 @@ public class DataNodeManager {
             return null;
         }
 
-        return dataNodeSelector.selectDataNode(dataNodeInfos);
+        return dataNodeSelectorForFile.selectDataNode(dataNodeInfos);
     }
 
     /**

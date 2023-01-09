@@ -1,7 +1,7 @@
-package com.sciatta.hummer.namenode.server;
+package com.sciatta.hummer.namenode;
 
 import com.sciatta.hummer.core.server.AbstractServer;
-import com.sciatta.hummer.namenode.data.DataNodeManager;
+import com.sciatta.hummer.namenode.fs.DataNodeManager;
 import com.sciatta.hummer.namenode.fs.FSImageUploadServer;
 import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.namenode.rpc.NameNodeRpcServer;

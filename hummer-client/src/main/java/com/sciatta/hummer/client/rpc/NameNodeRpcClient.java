@@ -2,7 +2,7 @@ package com.sciatta.hummer.client.rpc;
 
 import com.google.gson.reflect.TypeToken;
 import com.sciatta.hummer.client.config.FileSystemClientConfig;
-import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.core.fs.DataNodeInfo;
 import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.rpc.*;

@@ -1,7 +1,7 @@
-package com.sciatta.hummer.datanode.server.server;
+package com.sciatta.hummer.datanode.server;
 
 import com.sciatta.hummer.core.server.AbstractServer;
-import com.sciatta.hummer.datanode.server.data.DataNodeManager;
+import com.sciatta.hummer.datanode.server.fs.DataNodeManager;
 import com.sciatta.hummer.datanode.server.fs.DataNodeFileServer;
 import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
 import org.slf4j.Logger;

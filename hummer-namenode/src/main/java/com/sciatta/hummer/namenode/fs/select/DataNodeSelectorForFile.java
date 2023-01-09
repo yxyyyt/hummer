@@ -1,6 +1,6 @@
-package com.sciatta.hummer.namenode.data.select;
+package com.sciatta.hummer.namenode.fs.select;
 
-import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.core.fs.DataNodeInfo;
 
 import java.util.Set;
 
@@ -9,7 +9,7 @@ import java.util.Set;
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
  * 数据节点选择器，获取文件所在的数据节点
  */
-public interface DataNodeSelector {
+public interface DataNodeSelectorForFile {
     /**
      * 获取数据节点
      *

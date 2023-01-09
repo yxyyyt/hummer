@@ -3,7 +3,7 @@ package com.sciatta.hummer.datanode.server.transport;
 import com.sciatta.hummer.core.transport.Command;
 import com.sciatta.hummer.core.transport.CommandExecutor;
 import com.sciatta.hummer.core.transport.TransportStatus;
-import com.sciatta.hummer.datanode.server.data.DataNodeManager;
+import com.sciatta.hummer.datanode.server.fs.DataNodeManager;
 
 /**
  * Created by Rain on 2023/1/5<br>

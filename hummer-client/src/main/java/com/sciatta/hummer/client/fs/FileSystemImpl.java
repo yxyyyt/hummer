@@ -1,7 +1,7 @@
 package com.sciatta.hummer.client.fs;
 
 import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
-import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.core.fs.DataNodeInfo;
 import com.sciatta.hummer.core.transport.TransportStatus;
 
 import java.util.List;

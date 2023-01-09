@@ -1,7 +1,5 @@
 package com.sciatta.hummer.backupnode;
 
-import com.sciatta.hummer.backupnode.server.BackupNodeServer;
-
 import java.io.IOException;
 
 /**

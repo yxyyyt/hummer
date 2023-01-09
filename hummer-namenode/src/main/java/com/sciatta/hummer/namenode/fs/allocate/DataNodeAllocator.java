@@ -1,6 +1,6 @@
-package com.sciatta.hummer.namenode.data.allocate;
+package com.sciatta.hummer.namenode.fs.allocate;
 
-import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.core.fs.DataNodeInfo;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
 
 import java.util.List;

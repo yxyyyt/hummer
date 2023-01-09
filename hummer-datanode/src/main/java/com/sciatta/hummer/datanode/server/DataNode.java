@@ -1,7 +1,5 @@
 package com.sciatta.hummer.datanode.server;
 
-import com.sciatta.hummer.datanode.server.server.DataNodeServer;
-
 import java.io.IOException;
 
 /**

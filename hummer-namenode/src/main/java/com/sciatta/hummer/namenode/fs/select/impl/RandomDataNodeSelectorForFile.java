@@ -1,7 +1,7 @@
-package com.sciatta.hummer.namenode.data.select.impl;
+package com.sciatta.hummer.namenode.fs.select.impl;
 
-import com.sciatta.hummer.core.data.DataNodeInfo;
-import com.sciatta.hummer.namenode.data.select.DataNodeSelector;
+import com.sciatta.hummer.core.fs.DataNodeInfo;
+import com.sciatta.hummer.namenode.fs.select.DataNodeSelectorForFile;
 
 import java.util.Random;
 import java.util.Set;
@@ -11,7 +11,7 @@ import java.util.Set;
  * All Rights Reserved(C) 2017 - 2023 SCIATTA <br> <p/>
  * 随机获取文件所在的数据节点
  */
-public class RandomDataNodeSelector implements DataNodeSelector {
+public class RandomDataNodeSelectorForFile implements DataNodeSelectorForFile {
     private final Random random = new Random();
 
     @Override

@@ -1,7 +1,7 @@
 package com.sciatta.hummer.namenode.rpc;
 
 import com.google.gson.reflect.TypeToken;
-import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.core.fs.DataNodeInfo;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
 import com.sciatta.hummer.core.server.Server;
@@ -9,7 +9,7 @@ import com.sciatta.hummer.core.transport.Command;
 import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
-import com.sciatta.hummer.namenode.data.DataNodeManager;
+import com.sciatta.hummer.namenode.fs.DataNodeManager;
 import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.rpc.*;
 import io.grpc.stub.StreamObserver;

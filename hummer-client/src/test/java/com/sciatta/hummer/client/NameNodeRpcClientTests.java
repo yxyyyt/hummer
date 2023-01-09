@@ -1,7 +1,7 @@
 package com.sciatta.hummer.client;
 
 import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
-import com.sciatta.hummer.core.data.DataNodeInfo;
+import com.sciatta.hummer.core.fs.DataNodeInfo;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

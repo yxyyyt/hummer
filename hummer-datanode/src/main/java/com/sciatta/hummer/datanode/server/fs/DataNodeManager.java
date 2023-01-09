@@ -1,4 +1,4 @@
-package com.sciatta.hummer.datanode.server.data;
+package com.sciatta.hummer.datanode.server.fs;
 
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.transport.Command;
@@ -6,7 +6,6 @@ import com.sciatta.hummer.core.transport.CommandExecutor;
 import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.util.PathUtils;
 import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
-import com.sciatta.hummer.datanode.server.fs.StorageInfo;
 import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.datanode.server.transport.ReRegisterCommandExecutor;
 import org.slf4j.Logger;

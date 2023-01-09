@@ -1,4 +1,4 @@
-package com.sciatta.hummer.backupnode.server;
+package com.sciatta.hummer.backupnode;
 
 import com.sciatta.hummer.backupnode.fs.FSEditsLogSynchronizer;
 import com.sciatta.hummer.backupnode.fs.FSImageCheckPointer;

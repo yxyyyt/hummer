@@ -50,6 +50,11 @@
                 <artifactId>hummer-rpc</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>com.sciatta.hummer</groupId>
+                <artifactId>hummer-client</artifactId>
+                <version>${revision}</version>
+            </dependency>
             <!-- logback -->
             <dependency>
                 <groupId>ch.qos.logback</groupId>

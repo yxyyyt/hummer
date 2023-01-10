@@ -1,17 +1,16 @@
-package com.sciatta.hummer.datanode.server.transport;
+package com.sciatta.hummer.datanode.transport;
 
-import com.sciatta.hummer.core.transport.Command;
-import com.sciatta.hummer.core.transport.CommandExecutor;
-import com.sciatta.hummer.core.transport.ReplicateTaskCommand;
+import com.sciatta.hummer.client.fs.DataNodeFileClient;
+import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.core.transport.TransportStatus;
+import com.sciatta.hummer.core.transport.command.Command;
+import com.sciatta.hummer.core.transport.command.CommandExecutor;
+import com.sciatta.hummer.core.transport.command.impl.ReplicateTaskCommand;
 import com.sciatta.hummer.core.util.PathUtils;
-import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
-import com.sciatta.hummer.datanode.server.fs.DataNodeFileClient;
-import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
+import com.sciatta.hummer.datanode.config.DataNodeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -37,16 +36,16 @@ public class ReplicateTaskCommandExecutor implements CommandExecutor {
     }
 
     @Override
-    public void execute(Command command) {
+    public boolean execute(Command command) {
         ReplicateTaskCommand replicateTaskCommand = (ReplicateTaskCommand) command;
 
-        byte[] bytes = this.dataNodeFileClient.downloadFile(
-                replicateTaskCommand.getHostname(),
-                replicateTaskCommand.getPort(),
-                replicateTaskCommand.getFileName()
-        );
-
         try {
+            byte[] bytes = this.dataNodeFileClient.downloadFile(
+                    replicateTaskCommand.getHostname(),
+                    replicateTaskCommand.getPort(),
+                    replicateTaskCommand.getFileName()
+            );
+
             String absoluteFileName = PathUtils.getAbsoluteFileName(DataNodeConfig.getDataNodeDataPath(),
                     replicateTaskCommand.getFileName());
 
@@ -61,11 +60,16 @@ public class ReplicateTaskCommandExecutor implements CommandExecutor {
             );
 
             // 向元数据节点增量上报文件
-            this.nameNodeRpcClient.incrementalReport(replicateTaskCommand.getFileName(), bytes.length);
+            this.nameNodeRpcClient.incrementalReport(
+                    DataNodeConfig.getLocalHostname(),
+                    DataNodeConfig.getLocalPort(),
+                    replicateTaskCommand.getFileName(),
+                    bytes.length);
             logger.debug("incremental report file name is {} , file size is {}",
                     replicateTaskCommand.getFileName(), bytes.length);
 
-        } catch (IOException e) {
+            return true;
+        } catch (Throwable e) {
             logger.error("{} while from {}:{} data node download file {}",
                     e.getMessage(),
                     replicateTaskCommand.getHostname(),
@@ -73,5 +77,7 @@ public class ReplicateTaskCommandExecutor implements CommandExecutor {
                     replicateTaskCommand.getFileName()
             );
         }
+
+        return false;
     }
 }

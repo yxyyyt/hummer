@@ -12,24 +12,6 @@ public class BackupNodeConfig {
     private static final ConfigManager configManager = ConfigManager.getInstance();
 
     /**
-     * 获取元数据节点RPC主机
-     *
-     * @return 元数据节点RPC主机
-     */
-    public static String getNameNodeRpcHost() {
-        return configManager.getStringConfig("NAME_NODE_RPC_HOST", "localhost");
-    }
-
-    /**
-     * 获取元数据节点RPC端口
-     *
-     * @return 元数据节点RPC端口
-     */
-    public static int getNameNodeRpcPort() {
-        return configManager.getIntConfig("NAME_NODE_RPC_PORT", 3030);
-    }
-
-    /**
      * 获取元数据节点镜像上传主机
      *
      * @return 元数据节点镜像上传主机

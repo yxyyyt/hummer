@@ -6,6 +6,13 @@ package com.sciatta.hummer.core.transport;
  * 请求类型
  */
 public final class RequestType {
+    /**
+     * 上传文件
+     */
     public static final int UPLOAD_FILE = 1;
+
+    /**
+     * 下载文件
+     */
     public static final int DOWNLOAD_FILE = 2;
 }

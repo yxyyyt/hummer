@@ -1,8 +1,9 @@
 package com.sciatta.hummer.backupnode.fs;
 
 import com.sciatta.hummer.backupnode.config.BackupNodeConfig;
-import com.sciatta.hummer.backupnode.rpc.NameNodeRpcClient;
+import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
+import com.sciatta.hummer.core.server.Holder;
 import com.sciatta.hummer.core.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,10 +32,11 @@ public class FSEditsLogSynchronizer extends Thread {
     @Override
     public void run() {
         while (!server.isClosing()) {
-            List<EditLog> editsLog = nameNodeRpcClient.fetchEditsLog(fsNameSystem.getSyncedTxId());
+            Holder<List<EditLog>> holder = new Holder<>();
+            nameNodeRpcClient.fetchEditsLog(fsNameSystem.getSyncedTxId(), holder);
 
             // 没有数据，等待一会，重新拉取
-            if (editsLog.size() == 0) {
+            if (holder.get() == null || holder.get().size() == 0) {
                 logger.debug("fetch editsLog is empty, wait a minute and repeat pull");
                 try {
                     TimeUnit.SECONDS.sleep(1);
@@ -45,9 +47,9 @@ public class FSEditsLogSynchronizer extends Thread {
             }
 
             // 小于拉取一个批次的数据，等待一会再重放
-            if (editsLog.size() < BackupNodeConfig.getBackupNodeFetchSize()) {
+            if (holder.get().size() < BackupNodeConfig.getBackupNodeFetchSize()) {
                 logger.debug("fetch editsLog [{}] < BACKUP_NODE_FETCH_SIZE [{}], wait a minute",
-                        editsLog.size(), BackupNodeConfig.getBackupNodeFetchSize());
+                        holder.get().size(), BackupNodeConfig.getBackupNodeFetchSize());
                 try {
                     TimeUnit.SECONDS.sleep(1);
                 } catch (InterruptedException e) {
@@ -55,7 +57,7 @@ public class FSEditsLogSynchronizer extends Thread {
                 }
             }
 
-            for (EditLog editLog : editsLog) {
+            for (EditLog editLog : holder.get()) {
                 fsNameSystem.replay(editLog, true); // 重放事务日志
             }
         }

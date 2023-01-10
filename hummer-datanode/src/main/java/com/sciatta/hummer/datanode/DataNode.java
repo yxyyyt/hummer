@@ -1,4 +1,6 @@
-package com.sciatta.hummer.datanode.server;
+package com.sciatta.hummer.datanode;
+
+import com.sciatta.hummer.datanode.server.DataNodeServer;
 
 import java.io.IOException;
 

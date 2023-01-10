@@ -1,11 +1,11 @@
-package com.sciatta.hummer.datanode.server.fs;
+package com.sciatta.hummer.datanode.fs;
 
+import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.core.exception.HummerException;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.transport.RequestType;
 import com.sciatta.hummer.core.util.PathUtils;
-import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
-import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
+import com.sciatta.hummer.datanode.config.DataNodeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +16,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -146,6 +149,9 @@ public class DataNodeFileServer extends Thread {
             // 选择工作队列，设置SelectionKey
             int queueIndex = remoteAddress.hashCode() % queues.size();
             queues.get(queueIndex).put(key);
+
+            // 取消读事件，防止空轮训
+            key.interestOps(key.interestOps() & ~SelectionKey.OP_READ);
         }
     }
 
@@ -174,7 +180,10 @@ public class DataNodeFileServer extends Thread {
                         continue;
                     }
 
-                    handleRequest(channel, key);
+                    if (!handleRequest(channel, key)) {
+                        // 没有读取完成，重新注册读请求
+                        key.interestOps(key.interestOps() & SelectionKey.OP_READ);
+                    }
 
                 } catch (IOException | InterruptedException e) {
                     logger.error("{} while resolution request", e.getMessage());
@@ -194,9 +203,10 @@ public class DataNodeFileServer extends Thread {
      *
      * @param channel 客户端通道
      * @param key     SelectionKey
+     * @return 是否读取完成；true，读取完成；否则，没有读取完成
      * @throws IOException IO异常
      */
-    private void handleRequest(SocketChannel channel, SelectionKey key) throws IOException {
+    private boolean handleRequest(SocketChannel channel, SelectionKey key) throws IOException {
         String client = channel.getRemoteAddress().toString();
 
         logger.debug("start to handle {} request", client);
@@ -204,16 +214,20 @@ public class DataNodeFileServer extends Thread {
         // 请求类型
         int requestType;
         if ((requestType = getRequestType(channel)) == 0) {
-            return;
+            return false;
         } else {
             logger.debug("get request type {} from request", requestType);
         }
 
+        boolean ans = false;
+
         if (RequestType.UPLOAD_FILE == requestType) {
-            handleUploadFileRequest(channel, key);
+            ans = handleUploadFileRequest(channel, key);
         } else if (RequestType.DOWNLOAD_FILE == requestType) {
-            handleDownloadFileRequest(channel, key);
+            ans = handleDownloadFileRequest(channel, key);
         }
+
+        return ans;
     }
 
     /**
@@ -272,23 +286,24 @@ public class DataNodeFileServer extends Thread {
      *
      * @param channel 客户端通道
      * @param key     SelectionKey
+     * @return 是否读取完成；true，读取完成；否则，没有读取完成
      * @throws IOException IO异常
      */
-    private void handleUploadFileRequest(SocketChannel channel, SelectionKey key) throws IOException {
+    private boolean handleUploadFileRequest(SocketChannel channel, SelectionKey key) throws IOException {
         String client = channel.getRemoteAddress().toString();
 
         // 文件名
         FileName fileName = getFileName(channel);
         logger.debug("get file name {} from request", fileName);
         if (fileName == null) {
-            return;
+            return false;
         }
 
         // 文件长度
         long fileLength = getFileLength(channel);
         logger.debug("get file length {} from request", fileLength);
         if (fileLength == 0) {
-            return;
+            return false;
         }
 
         // 文件
@@ -312,7 +327,7 @@ public class DataNodeFileServer extends Thread {
             if (!fileBuffer.hasRemaining()) {
                 fileBuffer.rewind();
                 fileChannel.write(fileBuffer);
-                logger.debug("write {}/{} bytes to {}", hasReadFileSize, fileLength, fileName.absoluteFileName);
+                logger.debug("write {}({}) bytes to {}", hasReadFileSize, fileLength, fileName.absoluteFileName);
 
                 fileByClient.remove(client);
 
@@ -324,17 +339,20 @@ public class DataNodeFileServer extends Thread {
                 cachedRequests.remove(client);
 
                 // 向元数据节点增量上报文件
-                nameNodeRpcClient.incrementalReport(fileName.relativeFileName, fileLength);
-                logger.debug("incremental report file name is {} , file size is {}",
-                        fileName.relativeFileName, fileLength);
+                nameNodeRpcClient.incrementalReport(
+                        DataNodeConfig.getLocalHostname(),
+                        DataNodeConfig.getLocalPort(),
+                        fileName.relativeFileName,
+                        fileLength);
+                logger.debug("incremental report file name {} success", fileName.relativeFileName);
 
-                // 取消读事件
-                key.interestOps(key.interestOps() & ~SelectionKey.OP_READ);
-
+                return true;
             } else {
                 fileByClient.put(client, fileBuffer);
                 getCachedRequest(client).hasReadFileLength = hasReadFileSize;
-                logger.debug("write {}/{} bytes to {}", hasReadFileSize, fileLength, fileName.absoluteFileName);
+                logger.debug("write {}({}) bytes to {}", hasReadFileSize, fileLength, fileName.absoluteFileName);
+
+                return false;
             }
         } finally {
             if (fileChannel != null) fileChannel.close();
@@ -486,14 +504,16 @@ public class DataNodeFileServer extends Thread {
      *
      * @param channel 客户端通道
      * @param key     SelectionKey
+     * @return 是否读取完成；true，读取完成；否则，没有读取完成
+     * @throws IOException IO异常
      */
-    private void handleDownloadFileRequest(SocketChannel channel, SelectionKey key) throws IOException {
+    private boolean handleDownloadFileRequest(SocketChannel channel, SelectionKey key) throws IOException {
         String client = channel.getRemoteAddress().toString();
 
         FileName fileName = getFileName(channel);
         logger.debug("get file name {} from request", fileName);
         if (fileName == null) {
-            return;
+            return false;
         }
 
         File file = new File(fileName.absoluteFileName);
@@ -512,16 +532,16 @@ public class DataNodeFileServer extends Thread {
             // 文件
             while (buffer.hasRemaining()) {
                 hasReadFileLength += fileChannel.read(buffer);
-                logger.debug("read {}/{} bytes from {}", hasReadFileLength, fileLength, fileName.absoluteFileName);
+                logger.debug("read {}({}) bytes from {}", hasReadFileLength, fileLength, fileName.absoluteFileName);
             }
 
             buffer.rewind();
             int write = channel.write(buffer);
-            logger.debug("write file {}/{} bytes to {} finish", write, buffer.capacity(), client);
+            logger.debug("write file {}({}) bytes to {} finish", write, buffer.capacity(), client);
 
             cachedRequests.remove(client);
-            key.interestOps(key.interestOps() & ~SelectionKey.OP_READ);
 
+            return true;
         } finally {
             fileInputStream.close();
             fileChannel.close();

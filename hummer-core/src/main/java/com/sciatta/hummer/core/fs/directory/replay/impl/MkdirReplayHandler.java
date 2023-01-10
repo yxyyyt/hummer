@@ -1,9 +1,10 @@
-package com.sciatta.hummer.core.fs.directory.replay;
+package com.sciatta.hummer.core.fs.directory.replay.impl;
 
 import com.sciatta.hummer.core.fs.directory.FSDirectory;
+import com.sciatta.hummer.core.fs.directory.replay.AbstractReplayHandler;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FSEditLog;
-import com.sciatta.hummer.core.fs.editlog.operation.MkDirOperation;
+import com.sciatta.hummer.core.fs.editlog.operation.impl.MkDirOperation;
 import com.sciatta.hummer.core.fs.editlog.operation.OperationType;
 
 /**

@@ -1,9 +1,11 @@
-package com.sciatta.hummer.core.transport;
+package com.sciatta.hummer.core.transport.command.impl;
+
+import com.sciatta.hummer.core.transport.command.Command;
 
 /**
  * Created by Rain on 2023/1/9<br>
  * All Rights Reserved(C) 2017 - 2023 SCIATTA <br> <p/>
- * 删除副本任务传输命令
+ * 删除副本任务命令
  */
 public class RemoveReplicaTaskCommand extends Command {
     /**

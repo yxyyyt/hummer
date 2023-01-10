@@ -1,9 +1,9 @@
-package com.sciatta.hummer.datanode.server.transport;
+package com.sciatta.hummer.datanode.transport;
 
-import com.sciatta.hummer.core.transport.Command;
-import com.sciatta.hummer.core.transport.CommandExecutor;
+import com.sciatta.hummer.core.transport.command.Command;
+import com.sciatta.hummer.core.transport.command.CommandExecutor;
 import com.sciatta.hummer.core.transport.TransportStatus;
-import com.sciatta.hummer.datanode.server.fs.DataNodeManager;
+import com.sciatta.hummer.datanode.fs.DataNodeManager;
 
 /**
  * Created by Rain on 2023/1/5<br>
@@ -23,7 +23,8 @@ public class ReRegisterCommandExecutor implements CommandExecutor {
     }
 
     @Override
-    public void execute(Command command) {
+    public boolean execute(Command command) {
         this.dataNodeManager.register();
+        return true;
     }
 }

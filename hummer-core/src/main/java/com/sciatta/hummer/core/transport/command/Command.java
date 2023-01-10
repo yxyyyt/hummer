@@ -1,4 +1,4 @@
-package com.sciatta.hummer.core.transport;
+package com.sciatta.hummer.core.transport.command;
 
 /**
  * Created by Rain on 2023/1/5<br>

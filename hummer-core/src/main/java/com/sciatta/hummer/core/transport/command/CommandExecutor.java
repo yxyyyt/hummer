@@ -1,4 +1,4 @@
-package com.sciatta.hummer.core.transport;
+package com.sciatta.hummer.core.transport.command;
 
 /**
  * Created by Rain on 2023/1/5<br>
@@ -18,6 +18,7 @@ public interface CommandExecutor {
      * 执行传输命令
      *
      * @param command 传输命令
+     * @return true，执行成功；否则，执行失败
      */
-    void execute(Command command);
+    boolean execute(Command command);
 }

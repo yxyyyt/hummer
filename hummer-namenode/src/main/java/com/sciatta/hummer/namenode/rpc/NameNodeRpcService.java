@@ -1,13 +1,13 @@
 package com.sciatta.hummer.namenode.rpc;
 
 import com.google.gson.reflect.TypeToken;
-import com.sciatta.hummer.core.fs.DataNodeInfo;
+import com.sciatta.hummer.core.fs.data.DataNodeInfo;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
 import com.sciatta.hummer.core.server.Server;
-import com.sciatta.hummer.core.transport.Command;
-import com.sciatta.hummer.core.transport.RemoveReplicaTaskCommand;
-import com.sciatta.hummer.core.transport.ReplicateTaskCommand;
+import com.sciatta.hummer.core.transport.command.Command;
+import com.sciatta.hummer.core.transport.command.impl.RemoveReplicaTaskCommand;
+import com.sciatta.hummer.core.transport.command.impl.ReplicateTaskCommand;
 import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
@@ -69,8 +69,13 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             return;
         }
 
-        int state = dataNodeManager.register(request.getHostname(), request.getPort());
-        response = RegisterResponse.newBuilder().setStatus(state).build();
+        int status = dataNodeManager.register(request.getHostname(), request.getPort());
+        response = RegisterResponse.newBuilder().setStatus(status).build();
+
+        logger.debug("data node {}:{} register finish, response status {}",
+                request.getHostname(),
+                request.getPort(),
+                status);
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -88,10 +93,10 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         }
 
         List<Command> commands = new ArrayList<>();
-        int state = dataNodeManager.heartbeat(request.getHostname(), request.getPort());
-        if (state == TransportStatus.HeartBeat.NOT_REGISTERED) {
+        int status = dataNodeManager.heartbeat(request.getHostname(), request.getPort());
+        if (status == TransportStatus.HeartBeat.NOT_REGISTERED) {
             commands.add(new Command(TransportStatus.HeartBeat.CommandType.RE_REGISTER));
-        } else if (state == TransportStatus.HeartBeat.SUCCESS) {
+        } else if (status == TransportStatus.HeartBeat.SUCCESS) {
 
             String uniqueKey = DataNodeInfo.uniqueKey(request.getHostname(), request.getPort());
 
@@ -121,8 +126,14 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         }
 
         response = HeartbeatResponse.newBuilder()
-                .setStatus(state)
+                .setStatus(status)
                 .setRemoteCommands(GsonUtils.toJson(commands)).build();
+
+        logger.debug("data node {}:{} heartbeat finish, response remote commands {}, status {}",
+                request.getHostname(),
+                request.getPort(),
+                commands,
+                status);
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -147,6 +158,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             response = MkdirResponse.newBuilder().setStatus(TransportStatus.Mkdir.FAIL).build();
         }
 
+        logger.debug("mkdir {} finish, response status {}", request.getPath(), response.getStatus());
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -170,6 +183,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             response = CreateFileResponse.newBuilder().setStatus(TransportStatus.CreateFile.FAIL).build();
         }
 
+        logger.debug("create file {} finish, response status {}", request.getFileName(), response.getStatus());
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -190,13 +205,16 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
 
         if (test) {
             response = IncrementalReportResponse.newBuilder().setStatus(TransportStatus.IncrementalReport.SUCCESS).build();
-            logger.debug("{} incremental report to data node {}:{} success",
-                    request.getFileName(), request.getHostname(), request.getPort());
         } else {
             response = IncrementalReportResponse.newBuilder().setStatus(TransportStatus.IncrementalReport.FAIL).build();
-            logger.debug("{} incremental report to data node {}:{} fail",
-                    request.getFileName(), request.getHostname(), request.getPort());
         }
+
+        logger.debug("data node {}:{} incremental report file name {}, file size {} finish, response status {}",
+                request.getHostname(),
+                request.getPort(),
+                request.getFileName(),
+                request.getFileSize(),
+                response.getStatus());
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -223,13 +241,16 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
 
         if (test) {
             response = FullReportResponse.newBuilder().setStatus(TransportStatus.FullReport.SUCCESS).build();
-            logger.debug("{} full report to data node {}:{} success",
-                    request.getFileNames(), request.getHostname(), request.getPort());
         } else {
             response = FullReportResponse.newBuilder().setStatus(TransportStatus.FullReport.FAIL).build();
-            logger.debug("{} incremental report to data node {}:{} fail",
-                    request.getFileNames(), request.getHostname(), request.getPort());
         }
+
+        logger.debug("data node {}:{} full report file names {}, file sizes {} finish, response status {}",
+                request.getHostname(),
+                request.getPort(),
+                request.getFileNames(),
+                request.getFileSizes(),
+                response.getStatus());
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -249,6 +270,9 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         List<EditLog> editsLog = doFetchEditsLog(request.getSyncedTxId());
 
         response = FetchEditsLogResponse.newBuilder().setStatus(TransportStatus.FetchEditsLog.SUCCESS).setEditsLog(GsonUtils.toJson(editsLog)).build();
+
+        logger.debug("synced txId {} fetch edits log finish, response edits log {}, status {}",
+                request.getSyncedTxId(), editsLog, response.getStatus());
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -276,6 +300,9 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
                     .build();
         }
 
+        logger.debug("{} allocate data nodes finish, response data nodes {}, status {}",
+                request.getFileName(), dataNodes, response.getStatus());
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -294,6 +321,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         server.close();
 
         response = ShutdownResponse.newBuilder().setStatus(TransportStatus.Shutdown.SUCCESS).build();
+
+        logger.debug("shutdown finish, response status {}", response.getStatus());
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -320,6 +349,9 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
                     .setStatus(TransportStatus.GetDataNodeForFile.SUCCESS)
                     .build();
         }
+
+        logger.debug("{} get data node for file finish, response data node {}, status {}",
+                request.getFileName(), dataNodeInfo, response.getStatus());
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

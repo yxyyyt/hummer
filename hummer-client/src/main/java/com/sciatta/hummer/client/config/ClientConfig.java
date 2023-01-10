@@ -7,7 +7,7 @@ import com.sciatta.hummer.core.config.ConfigManager;
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
  * 文件系统客户端配置
  */
-public class FileSystemClientConfig {
+public class ClientConfig {
     private static final ConfigManager configManager = ConfigManager.getInstance();
 
     /**

@@ -1,9 +1,10 @@
-package com.sciatta.hummer.core.fs.directory.replay;
+package com.sciatta.hummer.core.fs.directory.replay.impl;
 
 import com.sciatta.hummer.core.fs.directory.FSDirectory;
+import com.sciatta.hummer.core.fs.directory.replay.AbstractReplayHandler;
 import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FSEditLog;
-import com.sciatta.hummer.core.fs.editlog.operation.CreateFileOperation;
+import com.sciatta.hummer.core.fs.editlog.operation.impl.CreateFileOperation;
 import com.sciatta.hummer.core.fs.editlog.operation.OperationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

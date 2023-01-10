@@ -1,15 +1,18 @@
-package com.sciatta.hummer.datanode.server.fs;
+package com.sciatta.hummer.datanode.fs;
 
+import com.sciatta.hummer.client.fs.DataNodeFileClient;
+import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
+import com.sciatta.hummer.core.fs.data.StorageInfo;
+import com.sciatta.hummer.core.server.Holder;
 import com.sciatta.hummer.core.server.Server;
-import com.sciatta.hummer.core.transport.Command;
-import com.sciatta.hummer.core.transport.CommandExecutor;
 import com.sciatta.hummer.core.transport.TransportStatus;
+import com.sciatta.hummer.core.transport.command.Command;
+import com.sciatta.hummer.core.transport.command.CommandExecutor;
 import com.sciatta.hummer.core.util.PathUtils;
-import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
-import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
-import com.sciatta.hummer.datanode.server.transport.ReRegisterCommandExecutor;
-import com.sciatta.hummer.datanode.server.transport.RemoveReplicaTaskCommandExecutor;
-import com.sciatta.hummer.datanode.server.transport.ReplicateTaskCommandExecutor;
+import com.sciatta.hummer.datanode.config.DataNodeConfig;
+import com.sciatta.hummer.datanode.transport.ReRegisterCommandExecutor;
+import com.sciatta.hummer.datanode.transport.RemoveReplicaTaskCommandExecutor;
+import com.sciatta.hummer.datanode.transport.ReplicateTaskCommandExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,24 +65,33 @@ public class DataNodeManager {
      * 向元数据节点发起注册请求
      */
     public void register() {
-        int state = this.nameNodeRpcClient.register();
+        int state = this.nameNodeRpcClient.register(DataNodeConfig.getLocalHostname(), DataNodeConfig.getLocalPort());
         if (state == TransportStatus.Register.SUCCESS) {
+            logger.info("data node {}:{} register success",
+                    DataNodeConfig.getLocalHostname(), DataNodeConfig.getLocalPort());
+
             // 注册成功，上报全量文件信息
             StorageInfo storageInfo = getStorageInfo();
             if (storageInfo != null) {
-                state = this.nameNodeRpcClient.fullReport(storageInfo);
+                state = this.nameNodeRpcClient.fullReport(
+                        DataNodeConfig.getLocalHostname(),
+                        DataNodeConfig.getLocalPort(),
+                        storageInfo);
                 if (state == TransportStatus.FullReport.FAIL) {
-                    logger.error("data node close while full report storage info fail, state is {}", state);
+                    logger.error("data node {}:{} close while full report storage info fail",
+                            DataNodeConfig.getLocalHostname(), DataNodeConfig.getLocalPort());
                     server.close();
                 }
-                logger.debug("data node {}:{} register success and full report {}",
-                        DataNodeConfig.getLocalHostname(), DataNodeConfig.getLocalPort(), storageInfo);
+                logger.debug("data node {}:{} full report success",
+                        DataNodeConfig.getLocalHostname(), DataNodeConfig.getLocalPort());
             }
         } else if (state == TransportStatus.Register.REGISTERED) {
             // 已注册成功，数据节点短暂重启，元数据节点尚未剔除不可用数据节点，不需要上报全部文件信息
-            logger.warn("data node has registered");
+            logger.warn("data node {}:{} has registered",
+                    DataNodeConfig.getLocalHostname(), DataNodeConfig.getLocalPort());
         } else if (state == TransportStatus.Register.FAIL) {
-            logger.error("data node close while register fail, state is {}", state);
+            logger.error("data node {}:{} close while register fail",
+                    DataNodeConfig.getLocalHostname(), DataNodeConfig.getLocalPort());
             server.close();
         }
     }
@@ -149,25 +161,53 @@ public class DataNodeManager {
         @Override
         public void run() {
             while (!server.isClosing()) {
-                List<Command> commands = new ArrayList<>();
-                int state = nameNodeRpcClient.heartbeat(commands);
+                Holder<List<Command>> holder = new Holder<>();
+                int state = nameNodeRpcClient.heartbeat(
+                        DataNodeConfig.getLocalHostname(),
+                        DataNodeConfig.getLocalPort(),
+                        holder);
+
                 if (state == TransportStatus.HeartBeat.SUCCESS) {
-                    logger.debug("data node heartbeat success, state is {}", state);
+                    logger.debug("data node {}:{} heartbeat success",
+                            DataNodeConfig.getLocalHostname(),
+                            DataNodeConfig.getLocalPort());
                 } else if (state == TransportStatus.HeartBeat.FAIL) {
-                    logger.error("data node heartbeat fail, state is {}", state);
+                    logger.error("data node {}:{} heartbeat fail",
+                            DataNodeConfig.getLocalHostname(),
+                            DataNodeConfig.getLocalPort());
                 } else if (state == TransportStatus.HeartBeat.NOT_REGISTERED) {
-                    logger.warn("data node has not registered, state is {}", state);
+                    logger.warn("data node {}:{} has not registered",
+                            DataNodeConfig.getLocalHostname(),
+                            DataNodeConfig.getLocalPort());
                 }
 
-                if (commands.size() != 0) {
-                    logger.debug("--> execute name node issued {} commands start", commands.size());
+                List<Command> commands = holder.get();
+                if (commands != null && commands.size() > 0) {
+                    logger.debug("--> data node {}:{} execute name node issued {} commands start",
+                            DataNodeConfig.getLocalHostname(),
+                            DataNodeConfig.getLocalPort(),
+                            commands.size());
+
                     for (Command command : commands) {
                         boolean find = false;
                         for (CommandExecutor commandExecutor : registeredCommandExecutors) {
                             if (commandExecutor.accept(command)) {
-                                commandExecutor.execute(command);
                                 find = true;
-                                logger.debug("{} was successfully executed", command);
+
+                                boolean ans = commandExecutor.execute(command);
+
+                                if (ans) {
+                                    logger.debug("data node {}:{} was successfully executed {}",
+                                            DataNodeConfig.getLocalHostname(),
+                                            DataNodeConfig.getLocalPort(),
+                                            command);
+                                } else {
+                                    logger.warn("data node {}:{} failed to execute {}",
+                                            DataNodeConfig.getLocalHostname(),
+                                            DataNodeConfig.getLocalPort(),
+                                            command);
+                                }
+
                                 break;
                             }
                         }
@@ -175,7 +215,11 @@ public class DataNodeManager {
                             logger.warn("not any registered command executor for execute {}", command);
                         }
                     }
-                    logger.debug("<-- execute name node issued {} commands end", commands.size());
+
+                    logger.debug("<-- data node {}:{} execute name node issued {} commands end",
+                            DataNodeConfig.getLocalHostname(),
+                            DataNodeConfig.getLocalPort(),
+                            commands.size());
                 }
 
                 try {

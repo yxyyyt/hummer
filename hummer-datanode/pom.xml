@@ -24,6 +24,10 @@
         </dependency>
         <dependency>
             <groupId>com.sciatta.hummer</groupId>
+            <artifactId>hummer-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sciatta.hummer</groupId>
             <artifactId>hummer-rpc</artifactId>
         </dependency>
     </dependencies>

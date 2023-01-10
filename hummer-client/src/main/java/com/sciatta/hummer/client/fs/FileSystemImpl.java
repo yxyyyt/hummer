@@ -1,7 +1,8 @@
 package com.sciatta.hummer.client.fs;
 
 import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
-import com.sciatta.hummer.core.fs.DataNodeInfo;
+import com.sciatta.hummer.core.fs.data.DataNodeInfo;
+import com.sciatta.hummer.core.server.Holder;
 import com.sciatta.hummer.core.transport.TransportStatus;
 
 import java.util.List;
@@ -33,14 +34,21 @@ public class FileSystemImpl implements FileSystem {
         }
 
         // 向元数据节点申请分配数据节点
-        List<DataNodeInfo> dataNodes = this.nameNodeRpcClient.allocateDataNodes(fileName, fileSize);
-        if (dataNodes == null || dataNodes.size() <= 0) {
+        Holder<List<DataNodeInfo>> holder = new Holder<>();
+        int status = this.nameNodeRpcClient.allocateDataNodes(fileName, holder);
+        if (status != TransportStatus.AllocateDataNodes.SUCCESS) {
+            return false;
+        }
+
+        List<DataNodeInfo> dataNodeInfos = holder.get();
+
+        if (dataNodeInfos == null || dataNodeInfos.size() <= 0) {
             return false;
         }
 
         // 向各个数据节点上传文件
-        for (DataNodeInfo dataNode : dataNodes) {
-            dataNodeFileClient.uploadFile(dataNode.getHostname(), dataNode.getPort(), file, fileName, fileSize);
+        for (DataNodeInfo dataNodeInfo : dataNodeInfos) {
+            dataNodeFileClient.uploadFile(dataNodeInfo.getHostname(), dataNodeInfo.getPort(), file, fileName, fileSize);
         }
 
         return true;
@@ -48,13 +56,14 @@ public class FileSystemImpl implements FileSystem {
 
     @Override
     public byte[] downloadFile(String filename) {
-        DataNodeInfo dataNode = this.nameNodeRpcClient.getDataNodeForFile(filename);
+        Holder<DataNodeInfo> holder = new Holder<>();
+        int status = this.nameNodeRpcClient.getDataNodeForFile(filename, holder);
 
-        if (dataNode == null) {
+        if (status != TransportStatus.GetDataNodeForFile.SUCCESS || holder.get() == null) {
             return null;
         }
 
-        return this.dataNodeFileClient.downloadFile(dataNode.getHostname(), dataNode.getPort(), filename);
+        return this.dataNodeFileClient.downloadFile(holder.get().getHostname(), holder.get().getPort(), filename);
     }
 
     @Override

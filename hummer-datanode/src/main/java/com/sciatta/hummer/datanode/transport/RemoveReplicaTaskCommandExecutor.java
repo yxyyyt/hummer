@@ -1,10 +1,11 @@
-package com.sciatta.hummer.datanode.server.transport;
+package com.sciatta.hummer.datanode.transport;
 
 import com.sciatta.hummer.core.transport.*;
+import com.sciatta.hummer.core.transport.command.Command;
+import com.sciatta.hummer.core.transport.command.CommandExecutor;
+import com.sciatta.hummer.core.transport.command.impl.RemoveReplicaTaskCommand;
 import com.sciatta.hummer.core.util.PathUtils;
-import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
-import com.sciatta.hummer.datanode.server.fs.DataNodeFileClient;
-import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
+import com.sciatta.hummer.datanode.config.DataNodeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ public class RemoveReplicaTaskCommandExecutor implements CommandExecutor {
     }
 
     @Override
-    public void execute(Command command) {
+    public boolean execute(Command command) {
         RemoveReplicaTaskCommand removeReplicaTaskCommand = (RemoveReplicaTaskCommand) command;
 
         try {
@@ -40,8 +41,11 @@ public class RemoveReplicaTaskCommandExecutor implements CommandExecutor {
                     removeReplicaTaskCommand.getFileName(),
                     absoluteFileName);
 
+            return true;
         } catch (IOException e) {
             logger.error("{} while remove redundant replica {}", e.getMessage(), removeReplicaTaskCommand.getFileName());
         }
+
+        return false;
     }
 }

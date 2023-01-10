@@ -1,6 +1,4 @@
-package com.sciatta.hummer.core.fs;
-
-import java.util.Objects;
+package com.sciatta.hummer.core.fs.data;
 
 /**
  * Created by Rain on 2022/12/13<br>

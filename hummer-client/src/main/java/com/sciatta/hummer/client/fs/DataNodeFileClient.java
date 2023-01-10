@@ -77,7 +77,8 @@ public class DataNodeFileClient {
                         buffer.flip();
 
                         hasWriteLength += channel.write(buffer);
-                        logger.debug("write {}/{} bytes to {}:{}", hasWriteLength, buffer.capacity(), hostname, port);
+                        logger.debug("upload file {} write {}({}) bytes to {}:{}",
+                                fileName, hasWriteLength, buffer.capacity(), hostname, port);
 
                         if (buffer.hasRemaining()) {
                             // 发送时发生拆包，需要多次发送
@@ -86,11 +87,12 @@ public class DataNodeFileClient {
                             // 发送完成
                             key.interestOps(SelectionKey.OP_READ);
                         }
-                    } else if (key.isWritable()) {
+                    } else if (key.isWritable() && buffer != null) {
                         channel = (SocketChannel) key.channel();
 
                         hasWriteLength += channel.write(buffer);
-                        logger.debug("write {}/{} bytes to {}:{}", hasWriteLength, buffer.capacity(), hostname, port);
+                        logger.debug("upload file {} write {}({}) bytes to {}:{}",
+                                fileName, hasWriteLength, buffer.capacity(), hostname, port);
 
                         if (buffer.hasRemaining()) {
                             // 发送时发生拆包，需要多次发送
@@ -99,6 +101,7 @@ public class DataNodeFileClient {
                             // 发送完成
                             key.interestOps(SelectionKey.OP_READ);
                         }
+
                     } else if (key.isReadable()) {
                         channel = (SocketChannel) key.channel();
 
@@ -106,7 +109,8 @@ public class DataNodeFileClient {
                         int len = channel.read(buffer);
 
                         if (len > 0) {
-                            logger.debug("read {} from {}:{}", new String(buffer.array(), 0, len), hostname, port);
+                            logger.debug("read response {} from {}:{} while upload file {} finish",
+                                    new String(buffer.array(), 0, len), hostname, port, fileName);
                             sending = false;
                         }
                     }
@@ -190,9 +194,11 @@ public class DataNodeFileClient {
 
                         int write = channel.write(buffer);
 
-                        logger.debug("write {}/{} bytes to {}:{}", write, buffer.capacity(), hostname, port);
+                        logger.debug("download file {}, write {}({}) bytes to {}:{}",
+                                fileName, write, buffer.capacity(), hostname, port);
 
                         key.interestOps(SelectionKey.OP_READ);
+
                     } else if (key.isReadable()) {
                         channel = (SocketChannel) key.channel();
 
@@ -207,7 +213,7 @@ public class DataNodeFileClient {
                             if (!fileLengthBuffer.hasRemaining()) { // 读完
                                 fileLengthBuffer.rewind();
                                 fileLength = fileLengthBuffer.getLong();
-                                logger.debug("read file length {}", fileLength);
+                                logger.debug("download file {}, read file length {}", fileName, fileLength);
                             }
                         }
 
@@ -217,13 +223,12 @@ public class DataNodeFileClient {
                                 fileBuffer = ByteBuffer.allocate((int) fileLength);
                             }
                             hasReadLength += channel.read(fileBuffer);
-                            logger.debug("read file {}/{} bytes from {}:{}", hasReadLength, fileBuffer.capacity(),
-                                    hostname, port);
+                            logger.debug("download file {}, read file {}({}) bytes from {}:{}",
+                                    fileName, hasReadLength, fileBuffer.capacity(), hostname, port);
 
                             if (!fileBuffer.hasRemaining()) {   // 读完
                                 fileBuffer.rewind();
                                 file = fileBuffer.array();
-                                logger.debug("read file {} bytes from {}:{} finish", file.length, hostname, port);
                                 reading = false;
                             }
                         }
@@ -231,7 +236,6 @@ public class DataNodeFileClient {
                 }
             }
 
-            return file;
         } catch (Exception e) {
             logger.error("{} while download file {} from {}:{}", e.getMessage(), fileName, hostname, port);
         } finally {
@@ -250,6 +254,6 @@ public class DataNodeFileClient {
             }
         }
 
-        return null;
+        return file;
     }
 }

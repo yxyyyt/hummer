@@ -1,4 +1,4 @@
-package com.sciatta.hummer.datanode.server.config;
+package com.sciatta.hummer.datanode.config;
 
 import com.sciatta.hummer.core.config.ConfigManager;
 import com.sciatta.hummer.core.util.PathUtils;
@@ -10,24 +10,6 @@ import com.sciatta.hummer.core.util.PathUtils;
  */
 public class DataNodeConfig {
     private static final ConfigManager configManager = ConfigManager.getInstance();
-
-    /**
-     * 获取元数据节点RPC主机名
-     *
-     * @return 元数据节点RPC主机名
-     */
-    public static String getNameNodeRpcHost() {
-        return configManager.getStringConfig("NAME_NODE_RPC_HOST", "localhost");
-    }
-
-    /**
-     * 获取元数据节点RPC端口
-     *
-     * @return 元数据节点RPC端口
-     */
-    public static int getNameNodeRpcPort() {
-        return configManager.getIntConfig("NAME_NODE_RPC_PORT", 3030);
-    }
 
     /**
      * 获取本地主机名

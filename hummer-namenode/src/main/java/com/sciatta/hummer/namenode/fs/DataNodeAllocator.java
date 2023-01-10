@@ -1,6 +1,6 @@
 package com.sciatta.hummer.namenode.fs;
 
-import com.sciatta.hummer.core.fs.DataNodeInfo;
+import com.sciatta.hummer.core.fs.data.DataNodeInfo;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

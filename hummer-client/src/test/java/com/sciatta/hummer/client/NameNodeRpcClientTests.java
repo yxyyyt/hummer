@@ -1,7 +1,8 @@
 package com.sciatta.hummer.client;
 
 import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
-import com.sciatta.hummer.core.fs.DataNodeInfo;
+import com.sciatta.hummer.core.fs.data.DataNodeInfo;
+import com.sciatta.hummer.core.server.Holder;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -15,16 +16,18 @@ import java.util.List;
  */
 public class NameNodeRpcClientTests {
     @Test
-    public void testAllocateDataNodes_Invalid() {
+    public void testAllocateDataNodes_No_DataNode() {
         NameNodeRpcClient client = new NameNodeRpcClient();
-        List<DataNodeInfo> dataNodes = client.allocateDataNodes("/humer/test/1.log", 100);
-        assertNull(dataNodes);
+        Holder<List<DataNodeInfo>> holder = new Holder<>();
+        client.allocateDataNodes("/hummer/test/1.log", holder);
+        assertNull(holder.get());
     }
 
     @Test
     public void testAllocateDataNodes_Success() {
         NameNodeRpcClient client = new NameNodeRpcClient();
-        List<DataNodeInfo> dataNodes = client.allocateDataNodes("/humer/test/1.log", 100);
-        assertEquals(2, dataNodes.size());
+        Holder<List<DataNodeInfo>> holder = new Holder<>();
+        client.allocateDataNodes("/hummer/test/1.log", holder);
+        assertEquals(2, holder.get().size());
     }
 }

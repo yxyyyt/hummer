@@ -1,6 +1,6 @@
 package com.sciatta.hummer.namenode.fs;
 
-import com.sciatta.hummer.core.fs.DataNodeInfo;
+import com.sciatta.hummer.core.fs.data.DataNodeInfo;
 
 /**
  * Created by Rain on 2023/1/9<br>

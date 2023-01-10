@@ -1,12 +1,10 @@
 package com.sciatta.hummer.datanode.server;
 
+import com.sciatta.hummer.client.fs.DataNodeFileClient;
+import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.core.server.AbstractServer;
-import com.sciatta.hummer.datanode.server.fs.DataNodeFileClient;
-import com.sciatta.hummer.datanode.server.fs.DataNodeManager;
-import com.sciatta.hummer.datanode.server.fs.DataNodeFileServer;
-import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.sciatta.hummer.datanode.fs.DataNodeFileServer;
+import com.sciatta.hummer.datanode.fs.DataNodeManager;
 
 import java.io.IOException;
 
@@ -16,20 +14,17 @@ import java.io.IOException;
  * 数据节点服务
  */
 public class DataNodeServer extends AbstractServer {
-    private static final Logger logger = LoggerFactory.getLogger(DataNodeServer.class);
 
-    private final NameNodeRpcClient nameNodeRpcClient;
-    private final DataNodeFileClient dataNodeFileClient;
     private final DataNodeFileServer dataNodeFileServer;
-    private final DataNodeManager dataNodeManager;
 
     public DataNodeServer() {
         super();
 
-        this.nameNodeRpcClient = new NameNodeRpcClient();
-        this.dataNodeFileClient = new DataNodeFileClient();
+        NameNodeRpcClient nameNodeRpcClient = new NameNodeRpcClient();
+        DataNodeFileClient dataNodeFileClient = new DataNodeFileClient();
+        DataNodeManager dataNodeManager = new DataNodeManager(nameNodeRpcClient, dataNodeFileClient, this);
+
         this.dataNodeFileServer = new DataNodeFileServer(this, nameNodeRpcClient);
-        this.dataNodeManager = new DataNodeManager(this.nameNodeRpcClient, this.dataNodeFileClient, this);
     }
 
     @Override

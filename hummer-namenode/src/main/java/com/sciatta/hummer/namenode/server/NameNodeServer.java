@@ -1,4 +1,4 @@
-package com.sciatta.hummer.namenode;
+package com.sciatta.hummer.namenode.server;
 
 import com.sciatta.hummer.core.server.AbstractServer;
 import com.sciatta.hummer.namenode.fs.DataNodeManager;

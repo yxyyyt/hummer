@@ -1,5 +1,7 @@
 package com.sciatta.hummer.core.fs;
 
+import java.util.Objects;
+
 /**
  * Created by Rain on 2022/12/13<br>
  * All Rights Reserved(C) 2017 - 2022 SCIATTA <br> <p/>
@@ -78,6 +80,15 @@ public class DataNodeInfo {
 
     public void addStoredDataSize(long storedDataSize) {
         this.storedDataSize += storedDataSize;
+    }
+
+    /**
+     * 累加已存储数据的大小
+     *
+     * @param dataSize 文件数据大小
+     */
+    public void addDataSize(long dataSize) {
+        this.storedDataSize += dataSize;
     }
 
     /**

@@ -6,20 +6,20 @@ import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.transport.Command;
+import com.sciatta.hummer.core.transport.RemoveReplicaTaskCommand;
+import com.sciatta.hummer.core.transport.ReplicateTaskCommand;
 import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import com.sciatta.hummer.namenode.fs.DataNodeManager;
 import com.sciatta.hummer.namenode.fs.FSNameSystem;
+import com.sciatta.hummer.namenode.fs.ReplicateTask;
 import com.sciatta.hummer.rpc.*;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Rain on 2022/12/13<br>
@@ -91,6 +91,33 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
         int state = dataNodeManager.heartbeat(request.getHostname(), request.getPort());
         if (state == TransportStatus.HeartBeat.NOT_REGISTERED) {
             commands.add(new Command(TransportStatus.HeartBeat.CommandType.RE_REGISTER));
+        } else if (state == TransportStatus.HeartBeat.SUCCESS) {
+
+            String uniqueKey = DataNodeInfo.uniqueKey(request.getHostname(), request.getPort());
+
+            // 副本复制任务
+            Set<ReplicateTask> replicateTasks = this.dataNodeManager.getDataNodeToReplicateTasks().get(uniqueKey);
+            if (replicateTasks != null && replicateTasks.size() > 0) {
+                for (ReplicateTask replicateTask : replicateTasks) {
+                    commands.add(new ReplicateTaskCommand(
+                            TransportStatus.HeartBeat.CommandType.REPLICATE,
+                            replicateTask.getFileName(),
+                            replicateTask.getSource().getHostname(),
+                            replicateTask.getSource().getPort()
+                    ));
+                }
+            }
+
+            // 副本删除任务
+            Set<String> removeReplicaTasks = this.dataNodeManager.getDataNodeToRemoveReplicaTasks().get(uniqueKey);
+            if (removeReplicaTasks != null && removeReplicaTasks.size() > 0) {
+                for (String removeReplicaTask : removeReplicaTasks) {
+                    commands.add(new RemoveReplicaTaskCommand(
+                            TransportStatus.HeartBeat.CommandType.REMOVE_REPLICA,
+                            removeReplicaTask
+                    ));
+                }
+            }
         }
 
         response = HeartbeatResponse.newBuilder()
@@ -158,7 +185,8 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             return;
         }
 
-        boolean test = dataNodeManager.incrementalReport(request.getHostname(), request.getPort(), request.getFileName());
+        boolean test = dataNodeManager.incrementalReport(
+                request.getHostname(), request.getPort(), request.getFileName(), request.getFileSize());
 
         if (test) {
             response = IncrementalReportResponse.newBuilder().setStatus(TransportStatus.IncrementalReport.SUCCESS).build();
@@ -189,7 +217,9 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
                 request.getPort(),
                 GsonUtils.fromJson(request.getFileNames(), new TypeToken<List<String>>() {
                 }.getType()),
-                request.getStoredDataSize());
+                GsonUtils.fromJson(request.getFileSizes(), new TypeToken<List<Long>>() {
+                }.getType())
+        );
 
         if (test) {
             response = FullReportResponse.newBuilder().setStatus(TransportStatus.FullReport.SUCCESS).build();
@@ -235,14 +265,15 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             return;
         }
 
-        List<DataNodeInfo> dataNodes = this.dataNodeManager.allocateDataNodes(request.getFileSize());
-        if (dataNodes.size() > 0) {
+        List<DataNodeInfo> dataNodes = this.dataNodeManager.allocateDataNodes();
+
+        if (dataNodes == null || dataNodes.size() <= 0) {
+            response = AllocateDataNodesResponse.newBuilder().setStatus(TransportStatus.AllocateDataNodes.FAIL).build();
+        } else {
             response = AllocateDataNodesResponse.newBuilder()
                     .setStatus(TransportStatus.AllocateDataNodes.SUCCESS)
                     .setDataNodes(GsonUtils.toJson(dataNodes))
                     .build();
-        } else {
-            response = AllocateDataNodesResponse.newBuilder().setStatus(TransportStatus.AllocateDataNodes.FAIL).build();
         }
 
         responseObserver.onNext(response);
@@ -279,13 +310,13 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             return;
         }
 
-        DataNodeInfo dataNodeForFile = this.dataNodeManager.getDataNodeForFile(request.getFileName());
+        DataNodeInfo dataNodeInfo = this.dataNodeManager.selectOneDataNodeForFile(request.getFileName());
 
-        if (dataNodeForFile == null) {
+        if (dataNodeInfo == null) {
             response = GetDataNodeForFileResponse.newBuilder().setStatus(TransportStatus.GetDataNodeForFile.FAIL).build();
         } else {
             response = GetDataNodeForFileResponse.newBuilder()
-                    .setDataNodeInfo(GsonUtils.toJson(dataNodeForFile))
+                    .setDataNodeInfo(GsonUtils.toJson(dataNodeInfo))
                     .setStatus(TransportStatus.GetDataNodeForFile.SUCCESS)
                     .build();
         }

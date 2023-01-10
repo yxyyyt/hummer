@@ -10,14 +10,14 @@ import java.util.List;
  */
 public class StorageInfo {
     /**
-     * 存储上的所有文件
+     * 存储上的所有文件名
      */
     private List<String> fileNames = new ArrayList<>();
 
     /**
-     * 存储数据大小
+     * 存储上的所有文件大小
      */
-    private long storedDataSize = 0;
+    private List<Long> fileSizes = new ArrayList<>();
 
     public List<String> getFileNames() {
         return fileNames;
@@ -27,27 +27,19 @@ public class StorageInfo {
         this.fileNames = fileNames;
     }
 
-    public long getStoredDataSize() {
-        return storedDataSize;
+    public List<Long> getFileSizes() {
+        return fileSizes;
     }
 
-    public void setStoredDataSize(long storedDataSize) {
-        this.storedDataSize = storedDataSize;
-    }
-
-    public void addFileName(String fileName) {
-        this.fileNames.add(fileName);
-    }
-
-    public void addStoredDataSize(long storedDataSize) {
-        this.storedDataSize += storedDataSize;
+    public void setFileSizes(List<Long> fileSizes) {
+        this.fileSizes = fileSizes;
     }
 
     @Override
     public String toString() {
         return "StorageInfo{" +
                 "fileNames=" + fileNames +
-                ", storedDataSize=" + storedDataSize +
+                ", fileSizes=" + fileSizes +
                 '}';
     }
 }

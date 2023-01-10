@@ -1,6 +1,7 @@
 package com.sciatta.hummer.datanode.server;
 
 import com.sciatta.hummer.core.server.AbstractServer;
+import com.sciatta.hummer.datanode.server.fs.DataNodeFileClient;
 import com.sciatta.hummer.datanode.server.fs.DataNodeManager;
 import com.sciatta.hummer.datanode.server.fs.DataNodeFileServer;
 import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
@@ -18,6 +19,7 @@ public class DataNodeServer extends AbstractServer {
     private static final Logger logger = LoggerFactory.getLogger(DataNodeServer.class);
 
     private final NameNodeRpcClient nameNodeRpcClient;
+    private final DataNodeFileClient dataNodeFileClient;
     private final DataNodeFileServer dataNodeFileServer;
     private final DataNodeManager dataNodeManager;
 
@@ -25,8 +27,9 @@ public class DataNodeServer extends AbstractServer {
         super();
 
         this.nameNodeRpcClient = new NameNodeRpcClient();
+        this.dataNodeFileClient = new DataNodeFileClient();
         this.dataNodeFileServer = new DataNodeFileServer(this, nameNodeRpcClient);
-        this.dataNodeManager = new DataNodeManager(this.nameNodeRpcClient, this);
+        this.dataNodeManager = new DataNodeManager(this.nameNodeRpcClient, this.dataNodeFileClient, this);
     }
 
     @Override

@@ -48,6 +48,16 @@ public final class TransportStatus {
              * 未注册，需要重新注册
              */
             public static final int RE_REGISTER = 0;
+
+            /**
+             * 复制副本任务
+             */
+            public static final int REPLICATE = 1;
+
+            /**
+             * 删除副本任务
+             */
+            public static final int REMOVE_REPLICA = 2;
         }
     }
 

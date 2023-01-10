@@ -200,4 +200,27 @@ public class PathUtils {
 
         return path;
     }
+
+    /**
+     * 获取文件绝对路径
+     *
+     * @param absolutePath  绝对路径
+     * @param iNodeFileName 文件目录树中表示的文件名
+     * @return 文件绝对路径
+     * @throws IOException IO异常
+     */
+    public static String getAbsoluteFileName(String absolutePath, String iNodeFileName) throws IOException {
+        String[] fileNameSplit = iNodeFileName.split(PathUtils.getINodeSeparator());
+
+        StringBuilder filePath = new StringBuilder(absolutePath);
+        for (String s : fileNameSplit) {
+            if (s.equals("")) {
+                continue;
+            }
+            filePath.append(PathUtils.getFileSeparator()).append(s);
+        }
+
+        getPathAndCreateDirectoryIfNotExists(filePath.toString());
+        return filePath.toString();
+    }
 }

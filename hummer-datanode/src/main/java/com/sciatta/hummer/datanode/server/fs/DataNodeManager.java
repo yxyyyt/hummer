@@ -8,6 +8,8 @@ import com.sciatta.hummer.core.util.PathUtils;
 import com.sciatta.hummer.datanode.server.config.DataNodeConfig;
 import com.sciatta.hummer.datanode.server.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.datanode.server.transport.ReRegisterCommandExecutor;
+import com.sciatta.hummer.datanode.server.transport.RemoveReplicaTaskCommandExecutor;
+import com.sciatta.hummer.datanode.server.transport.ReplicateTaskCommandExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,10 +31,12 @@ public class DataNodeManager {
     private final List<CommandExecutor> registeredCommandExecutors = new ArrayList<>();
 
     private final NameNodeRpcClient nameNodeRpcClient;
+    private final DataNodeFileClient dataNodeFileClient;
     private final Server server;
 
-    public DataNodeManager(NameNodeRpcClient nameNodeRpcClient, Server server) {
+    public DataNodeManager(NameNodeRpcClient nameNodeRpcClient, DataNodeFileClient dataNodeFileClient, Server server) {
         this.nameNodeRpcClient = nameNodeRpcClient;
+        this.dataNodeFileClient = dataNodeFileClient;
         this.server = server;
 
         // 注册命令执行器
@@ -50,6 +54,8 @@ public class DataNodeManager {
      */
     private void registeredCommandExecutors() {
         registeredCommandExecutors.add(new ReRegisterCommandExecutor(this));
+        registeredCommandExecutors.add(new ReplicateTaskCommandExecutor(this.dataNodeFileClient, this.nameNodeRpcClient));
+        registeredCommandExecutors.add(new RemoveReplicaTaskCommandExecutor());
     }
 
     /**
@@ -119,8 +125,8 @@ public class DataNodeManager {
             path = path.substring(DataNodeConfig.getDataNodeDataPath().length());   // 文件相对路径
             path = path.replace(PathUtils.getFileSeparator(), PathUtils.getINodeSeparator());   // 内存目录树文件路径
 
-            storageInfo.addFileName(path);
-            storageInfo.addStoredDataSize(fileOrDir.length());
+            storageInfo.getFileNames().add(path);   // 文件相对路径
+            storageInfo.getFileSizes().add(fileOrDir.length()); // 文件大小
 
             return;
         }
@@ -150,24 +156,26 @@ public class DataNodeManager {
                 } else if (state == TransportStatus.HeartBeat.FAIL) {
                     logger.error("data node heartbeat fail, state is {}", state);
                 } else if (state == TransportStatus.HeartBeat.NOT_REGISTERED) {
-                    logger.warn("data node has not registered, execute name node issued commands, state is {}", state);
+                    logger.warn("data node has not registered, state is {}", state);
+                }
 
-                    if (commands.size() != 0) {
-                        for (Command command : commands) {
-                            boolean find = false;
-                            for (CommandExecutor commandExecutor : registeredCommandExecutors) {
-                                if (commandExecutor.accept(command)) {
-                                    commandExecutor.execute(command);
-                                    find = true;
-                                    break;
-                                }
-                            }
-                            if (!find) {
-                                logger.warn("not any registered command executor for execute {} command", command);
+                if (commands.size() != 0) {
+                    logger.debug("--> execute name node issued {} commands start", commands.size());
+                    for (Command command : commands) {
+                        boolean find = false;
+                        for (CommandExecutor commandExecutor : registeredCommandExecutors) {
+                            if (commandExecutor.accept(command)) {
+                                commandExecutor.execute(command);
+                                find = true;
+                                logger.debug("{} was successfully executed", command);
+                                break;
                             }
                         }
+                        if (!find) {
+                            logger.warn("not any registered command executor for execute {}", command);
+                        }
                     }
-
+                    logger.debug("<-- execute name node issued {} commands end", commands.size());
                 }
 
                 try {

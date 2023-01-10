@@ -87,14 +87,16 @@ public class NameNodeRpcClient {
      * 向元数据节点增量上报文件存储信息
      *
      * @param fileName 文件名
+     * @param fileSize 文件大小
      */
-    public void incrementalReport(String fileName) {
+    public void incrementalReport(String fileName, long fileSize) {
         logger.debug("send file name {} to name node for incremental report", fileName);
 
         IncrementalReportRequest request = IncrementalReportRequest.newBuilder()
                 .setHostname(DataNodeConfig.getLocalHostname())
                 .setPort(DataNodeConfig.getLocalPort())
                 .setFileName(fileName)
+                .setFileSize(fileSize)
                 .build();
 
         IncrementalReportResponse response = nameNodeServiceGrpc.incrementalReport(request);
@@ -115,7 +117,7 @@ public class NameNodeRpcClient {
                 .setHostname(DataNodeConfig.getLocalHostname())
                 .setPort(DataNodeConfig.getLocalPort())
                 .setFileNames(GsonUtils.toJson(storageInfo.getFileNames()))
-                .setStoredDataSize(storageInfo.getStoredDataSize())
+                .setFileSizes(GsonUtils.toJson(storageInfo.getFileSizes()))
                 .build();
 
         FullReportResponse response = nameNodeServiceGrpc.fullReport(request);

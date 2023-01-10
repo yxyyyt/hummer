@@ -324,7 +324,10 @@ public class DataNodeFileServer extends Thread {
                 cachedRequests.remove(client);
 
                 // 向元数据节点增量上报文件
-                nameNodeRpcClient.incrementalReport(fileName.relativeFileName);
+                nameNodeRpcClient.incrementalReport(fileName.relativeFileName, fileLength);
+                logger.debug("incremental report file name is {} , file size is {}",
+                        fileName.relativeFileName, fileLength);
+
                 // 取消读事件
                 key.interestOps(key.interestOps() & ~SelectionKey.OP_READ);
 
@@ -360,7 +363,8 @@ public class DataNodeFileServer extends Thread {
 
             fileName = new FileName();
             fileName.relativeFileName = relativeFileName;
-            fileName.absoluteFileName = getAbsoluteFilename(relativeFileName);
+            fileName.absoluteFileName = PathUtils.getAbsoluteFileName(DataNodeConfig.getDataNodeDataPath(),
+                    relativeFileName);
 
             getCachedRequest(client).fileName = fileName;
         }
@@ -422,28 +426,6 @@ public class DataNodeFileServer extends Thread {
         }
 
         return fileName;
-    }
-
-    /**
-     * 获取文件绝对路径
-     *
-     * @param fileName 文件名
-     * @return 文件绝对路径
-     * @throws IOException IO异常
-     */
-    private String getAbsoluteFilename(String fileName) throws IOException {
-        String[] fileNameSplit = fileName.split(PathUtils.getINodeSeparator());
-
-        StringBuilder filePath = new StringBuilder(DataNodeConfig.getDataNodeDataPath());
-        for (String s : fileNameSplit) {
-            if (s.equals("")) {
-                continue;
-            }
-            filePath.append(PathUtils.getFileSeparator()).append(s);
-        }
-
-        PathUtils.getPathAndCreateDirectoryIfNotExists(filePath.toString());
-        return filePath.toString();
     }
 
     /**

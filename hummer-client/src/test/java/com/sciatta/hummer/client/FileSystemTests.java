@@ -48,8 +48,11 @@ public class FileSystemTests {
     public void testDownloadFile() throws IOException {
         FileSystem fileSystem = new FileSystemImpl();
 
-        byte[] bytes = fileSystem.downloadFile("/hummer/images/face.jpg");
-        putDownloadFile(bytes);
+        for (int i = 0; i < 10; i++) {
+            String fileName = "face" + i + ".jpg";
+            byte[] bytes = fileSystem.downloadFile("/hummer/images/" + fileName);
+            putDownloadFile(bytes, fileName);
+        }
     }
 
     private Path getUploadFile() throws IOException {
@@ -60,11 +63,11 @@ public class FileSystemTests {
         return PathUtils.getPathAndCreateDirectoryIfNotExists(path);
     }
 
-    public void putDownloadFile(byte[] bytes) throws IOException {
+    public void putDownloadFile(byte[] bytes, String fileName) throws IOException {
         String path = PathUtils.getUserHome() + PathUtils.getFileSeparator() +
                 "hummer" + PathUtils.getFileSeparator() +
                 "download" + PathUtils.getFileSeparator() +
-                "myface.jpg";
+                "new_" + fileName;
 
         Path pathAndCreateDirectoryIfNotExists = PathUtils.getPathAndCreateDirectoryIfNotExists(path);
         Files.write(pathAndCreateDirectoryIfNotExists, bytes);

@@ -18,7 +18,7 @@ public final class NameNodeConfig {
      * @return 磁盘同步最大内存缓存大小，单位：字节
      */
     public static int getEditsLogBufferLimit() {
-        return configManager.getIntConfig("EDITS_LOG_BUFFER_LIMIT", 25 * 1024);
+        return configManager.getIntConfig("edits.log.buffer.limit", 25 * 1024);
     }
 
     /**
@@ -27,9 +27,21 @@ public final class NameNodeConfig {
      * @return 元数据节点根目录
      */
     public static String getNameNodeRootPath() {
-        return configManager.getStringConfig("NAME_NODE_ROOT_PATH",
+        return configManager.getStringConfig("name.node.root.path",
                 PathUtils.getPathWithSlashAtLast(PathUtils.getUserHome()) +
                         "hummer");
+    }
+
+    /**
+     * 获取元数据节点元数据目录
+     *
+     * @return 元数据节点元数据目录
+     */
+    public static String getNameNodeMetaDataPath() {
+        return configManager.getStringConfig("name.node.meta.data.path",
+                PathUtils.getPathWithSlashAtLast(getNameNodeRootPath()) +
+                        "meta-data" + PathUtils.getFileSeparator() +
+                        "namenode");
     }
 
     /**
@@ -38,11 +50,8 @@ public final class NameNodeConfig {
      * @return 事务日志持久化路径
      */
     public static String getEditsLogPath() {
-        return configManager.getStringConfig("EDITS_LOG_PATH",
-                PathUtils.getPathWithSlashAtLast(getNameNodeRootPath()) +
-                        "meta-data" + PathUtils.getFileSeparator() +
-                        "namenode" + PathUtils.getFileSeparator() +
-                        "editslog" + PathUtils.getFileSeparator());
+        return configManager.getStringConfig("edits.log.path",
+                PathUtils.getPathWithSlashAtLast(getNameNodeMetaDataPath()) + "editslog");
     }
 
     /**
@@ -51,11 +60,8 @@ public final class NameNodeConfig {
      * @return 检查点路径
      */
     public static String getCheckpointPath() {
-        return configManager.getStringConfig("CHECKPOINT_PATH",
-                PathUtils.getPathWithSlashAtLast(getNameNodeRootPath()) +
-                        "meta-data" + PathUtils.getFileSeparator() +
-                        "namenode" + PathUtils.getFileSeparator() +
-                        "checkpoint" + PathUtils.getFileSeparator());
+        return configManager.getStringConfig("checkpoint.path",
+                PathUtils.getPathWithSlashAtLast(getNameNodeMetaDataPath()) + "checkpoint");
     }
 
     /**
@@ -64,11 +70,8 @@ public final class NameNodeConfig {
      * @return 运行时仓库路径
      */
     public static String getRuntimeRepositoryPath() {
-        return configManager.getStringConfig("RUNTIME_REPOSITORY_PATH",
-                PathUtils.getPathWithSlashAtLast(getNameNodeRootPath()) +
-                        "meta-data" + PathUtils.getFileSeparator() +
-                        "namenode" + PathUtils.getFileSeparator() +
-                        "runtime" + PathUtils.getFileSeparator());
+        return configManager.getStringConfig("runtime.repository.path",
+                PathUtils.getPathWithSlashAtLast(getNameNodeMetaDataPath()) + "runtime");
     }
 
     /**
@@ -77,7 +80,7 @@ public final class NameNodeConfig {
      * @return 元数据节点RPC服务端口
      */
     public static int getNameNodeRpcServerPort() {
-        return configManager.getIntConfig("NAME_NODE_RPC_SERVER_PORT", 3030);
+        return configManager.getIntConfig("name.node.rpc.server.port", 3030);
     }
 
     /**
@@ -86,7 +89,7 @@ public final class NameNodeConfig {
      * @return 元数据节点镜像上传服务端口
      */
     public static int getNameNodeImageUploadServerPort() {
-        return configManager.getIntConfig("NAME_NODE_IMAGE_UPLOAD_SERVER_PORT", 4040);
+        return configManager.getIntConfig("name.node.image.upload.server.port", 4040);
     }
 
     /**
@@ -95,7 +98,7 @@ public final class NameNodeConfig {
      * @return 备份节点向元数据节点抓取事务日志一个批次的最大大小
      */
     public static int getBackupNodeMaxFetchSize() {
-        return configManager.getIntConfig("BACKUP_NODE_MAX_FETCH_SIZE", 10);
+        return configManager.getIntConfig("backup.node.max.fetch.size", 10);
     }
 
     /**
@@ -104,7 +107,7 @@ public final class NameNodeConfig {
      * @return 数据文件副本的数量
      */
     public static int getNumberOfReplicated() {
-        return configManager.getIntConfig("NUMBER_OF_REPLICATED", 2);
+        return configManager.getIntConfig("number.of.replicated", 2);
     }
 
     /**

@@ -17,7 +17,7 @@ public class BackupNodeConfig {
      * @return 元数据节点镜像上传主机
      */
     public static String getNameNodeImageUploadHost() {
-        return configManager.getStringConfig("NAME_NODE_IMAGE_UPLOAD_HOST", "localhost");
+        return configManager.getStringConfig("name.node.image.upload.host", "localhost");
     }
 
     /**
@@ -26,7 +26,7 @@ public class BackupNodeConfig {
      * @return 元数据节点镜像上传端口
      */
     public static int getNameNodeImageUploadPort() {
-        return configManager.getIntConfig("NAME_NODE_IMAGE_UPLOAD_PORT", 4040);
+        return configManager.getIntConfig("name.node.image.upload.port", 4040);
     }
 
     /**
@@ -35,7 +35,7 @@ public class BackupNodeConfig {
      * @return 向元数据节点抓取一个批次事务日志进行重放的限定数量
      */
     public static int getBackupNodeFetchSize() {
-        return configManager.getIntConfig("BACKUP_NODE_FETCH_SIZE", 10);
+        return configManager.getIntConfig("backup.node.fetch.size", 10);
     }
 
     /**
@@ -44,7 +44,7 @@ public class BackupNodeConfig {
      * @return 磁盘同步最大内存缓存大小，单位：字节
      */
     public static int getEditsLogBufferLimit() {
-        return configManager.getIntConfig("EDITS_LOG_BUFFER_LIMIT", 25 * 1024);
+        return configManager.getIntConfig("edits.log.buffer.limit", 25 * 1024);
     }
 
     /**
@@ -53,9 +53,21 @@ public class BackupNodeConfig {
      * @return 备份节点根目录
      */
     public static String getBackupNodeRootPath() {
-        return configManager.getStringConfig("BACKUP_NODE_ROOT_PATH",
+        return configManager.getStringConfig("backup.node.root.path",
                 PathUtils.getPathWithSlashAtLast(PathUtils.getUserHome()) +
                         "hummer");
+    }
+
+    /**
+     * 获取备份节点元数据目录
+     *
+     * @return 备份节点元数据目录
+     */
+    public static String getBackupNodeMetaDataPath() {
+        return configManager.getStringConfig("backup.node.meta.data.path",
+                PathUtils.getPathWithSlashAtLast(getBackupNodeRootPath()) +
+                        "meta-data" + PathUtils.getFileSeparator() +
+                        "backupnode");
     }
 
     /**
@@ -64,11 +76,8 @@ public class BackupNodeConfig {
      * @return 事务日志持久化路径
      */
     public static String getEditsLogPath() {
-        return configManager.getStringConfig("EDITS_LOG_PATH",
-                PathUtils.getPathWithSlashAtLast(getBackupNodeRootPath()) +
-                        "meta-data" + PathUtils.getFileSeparator() +
-                        "backupnode" + PathUtils.getFileSeparator() +
-                        "editslog" + PathUtils.getFileSeparator());
+        return configManager.getStringConfig("edits.log.path",
+                PathUtils.getPathWithSlashAtLast(getBackupNodeMetaDataPath()) + "editslog");
     }
 
     /**
@@ -77,11 +86,8 @@ public class BackupNodeConfig {
      * @return 检查点路径
      */
     public static String getCheckpointPath() {
-        return configManager.getStringConfig("CHECKPOINT_PATH",
-                PathUtils.getPathWithSlashAtLast(getBackupNodeRootPath()) +
-                        "meta-data" + PathUtils.getFileSeparator() +
-                        "backupnode" + PathUtils.getFileSeparator() +
-                        "checkpoint" + PathUtils.getFileSeparator());
+        return configManager.getStringConfig("checkpoint.path",
+                PathUtils.getPathWithSlashAtLast(getBackupNodeMetaDataPath()) + "checkpoint");
     }
 
     /**
@@ -90,11 +96,8 @@ public class BackupNodeConfig {
      * @return 运行时仓库路径
      */
     public static String getRuntimeRepositoryPath() {
-        return configManager.getStringConfig("RUNTIME_REPOSITORY_PATH",
-                PathUtils.getPathWithSlashAtLast(getBackupNodeRootPath()) +
-                        "meta-data" + PathUtils.getFileSeparator() +
-                        "backupnode" + PathUtils.getFileSeparator() +
-                        "runtime" + PathUtils.getFileSeparator());
+        return configManager.getStringConfig("runtime.repository.path",
+                PathUtils.getPathWithSlashAtLast(getBackupNodeMetaDataPath()) + "runtime");
     }
 
     /**
@@ -103,6 +106,6 @@ public class BackupNodeConfig {
      * @return 检查点定时执行间隔
      */
     public static int getCheckpointInterval() {
-        return configManager.getIntConfig("CHECKPOINT_INTERVAL", 60 * 1000);
+        return configManager.getIntConfig("checkpoint.interval", 60 * 1000);
     }
 }

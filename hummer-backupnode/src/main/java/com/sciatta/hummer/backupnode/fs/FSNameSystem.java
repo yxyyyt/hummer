@@ -34,12 +34,12 @@ public class FSNameSystem extends AbstractFSNameSystem {
 
     @Override
     public String getEditsLogPath() {
-        return BackupNodeConfig.getEditsLogPath();
+        return PathUtils.getPathWithSlashAtLast(BackupNodeConfig.getEditsLogPath());
     }
 
     @Override
     public String getRuntimeRepositoryPath() {
-        return BackupNodeConfig.getRuntimeRepositoryPath();
+        return PathUtils.getPathWithSlashAtLast(BackupNodeConfig.getRuntimeRepositoryPath());
     }
 
     /**

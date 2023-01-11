@@ -16,7 +16,7 @@ public class ClientConfig {
      * @return 元数据节点RPC主机
      */
     public static String getNameNodeRpcHost() {
-        return configManager.getStringConfig("NAME_NODE_RPC_HOST", "localhost");
+        return configManager.getStringConfig("name.node.rpc.host", "localhost");
     }
 
     /**
@@ -25,9 +25,6 @@ public class ClientConfig {
      * @return 元数据节点RPC端口
      */
     public static int getNameNodeRpcPort() {
-        return configManager.getIntConfig("NAME_NODE_RPC_PORT",
-                3030);
+        return configManager.getIntConfig("name.node.rpc.port", 3030);
     }
-
-
 }

@@ -37,9 +37,11 @@ public class FileSystemTests {
         FileSystem fileSystem = new FileSystemImpl();
 
         byte[] bytes = Files.readAllBytes(getUploadFile());
-        boolean ans = fileSystem.uploadFile(bytes, "/hummer/images/face.jpg", bytes.length);
 
-        assertTrue(ans);
+        for (int i = 0; i < 10; i++) {
+            boolean ans = fileSystem.uploadFile(bytes, "/hummer/images/face" + i + ".jpg", bytes.length);
+            assertTrue(ans);
+        }
     }
 
     @Test

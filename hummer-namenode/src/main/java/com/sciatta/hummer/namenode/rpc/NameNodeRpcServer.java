@@ -3,7 +3,7 @@ package com.sciatta.hummer.namenode.rpc;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
 import com.sciatta.hummer.namenode.fs.FSNameSystem;
 import com.sciatta.hummer.core.server.Server;
-import com.sciatta.hummer.namenode.fs.DataNodeManager;
+import com.sciatta.hummer.namenode.fs.data.DataNodeManager;
 import io.grpc.ServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

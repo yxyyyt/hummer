@@ -1,4 +1,4 @@
-package com.sciatta.hummer.namenode.fs;
+package com.sciatta.hummer.namenode.fs.backup;
 
 import com.sciatta.hummer.core.fs.AbstractFSNameSystem;
 import com.sciatta.hummer.core.server.Server;

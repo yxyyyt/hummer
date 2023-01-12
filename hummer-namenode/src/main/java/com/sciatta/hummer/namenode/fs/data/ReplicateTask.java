@@ -1,11 +1,11 @@
-package com.sciatta.hummer.namenode.fs;
+package com.sciatta.hummer.namenode.fs.data;
 
 import com.sciatta.hummer.core.fs.data.DataNodeInfo;
 
 /**
  * Created by Rain on 2023/1/9<br>
  * All Rights Reserved(C) 2017 - 2023 SCIATTA <br> <p/>
- * 复制任务
+ * 副本复制任务
  */
 public class ReplicateTask {
     /**

@@ -33,7 +33,7 @@ message HeartbeatRequest{
 }
 message HeartbeatResponse{
   int32 status = 1;
-  string remoteCommands = 2;
+  string remoteCommand = 2;
 }
 
 // Mkdir

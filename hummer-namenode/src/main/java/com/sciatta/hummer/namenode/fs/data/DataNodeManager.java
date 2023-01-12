@@ -1,4 +1,4 @@
-package com.sciatta.hummer.namenode.fs;
+package com.sciatta.hummer.namenode.fs.data;
 
 import com.sciatta.hummer.core.fs.data.DataNodeInfo;
 import com.sciatta.hummer.core.server.Server;
@@ -48,7 +48,7 @@ public class DataNodeManager {
     /**
      * 数据节点对应的文件删除任务
      */
-    private final ConcurrentMap<String, Set<String>> dataNodeToRemoveReplicaTasks = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Set<RemoveReplicaTask>> dataNodeToRemoveReplicaTasks = new ConcurrentHashMap<>();
 
     private final DataNodeAliveMonitor dataNodeAliveMonitor;
     private final DataNodeAllocator dataNodeAllocator;
@@ -74,7 +74,7 @@ public class DataNodeManager {
         return dataNodeToReplicateTasks;
     }
 
-    public ConcurrentMap<String, Set<String>> getDataNodeToRemoveReplicaTasks() {
+    public ConcurrentMap<String, Set<RemoveReplicaTask>> getDataNodeToRemoveReplicaTasks() {
         return dataNodeToRemoveReplicaTasks;
     }
 
@@ -233,12 +233,15 @@ public class DataNodeManager {
 
         // 冗余的文件上报，生成删除任务
         if (dataNodeInfos.size() == NameNodeConfig.getNumberOfReplicated()) {
-            Set<String> removeReplicaTasks = dataNodeToRemoveReplicaTasks.get(uniqueKey);
+            Set<RemoveReplicaTask> removeReplicaTasks = dataNodeToRemoveReplicaTasks.get(uniqueKey);
             if (removeReplicaTasks == null) {
                 this.dataNodeToRemoveReplicaTasks.putIfAbsent(uniqueKey, new CopyOnWriteArraySet<>());
                 removeReplicaTasks = this.dataNodeToRemoveReplicaTasks.get(uniqueKey);
             }
-            removeReplicaTasks.add(fileName);
+            RemoveReplicaTask removeReplicaTask = new RemoveReplicaTask(fileName);
+            removeReplicaTasks.add(removeReplicaTask);
+            logger.debug("file {} in data node {}; {} redundant report, then add remove replica task {}",
+                    fileName, dataNodeInfos, dataNodeInfo, removeReplicaTask);
             return;
         }
 
@@ -254,6 +257,9 @@ public class DataNodeManager {
 
         // 累加已存储数据的大小
         dataNodeInfo.addDataSize(fileSize);
+
+        logger.debug("{} add cache success, file {} in data node {}, data node {} have file {}",
+                dataNodeInfo, fileName, dataNodeInfos, uniqueKey, fileNames);
     }
 
     /**
@@ -334,6 +340,7 @@ public class DataNodeManager {
 
                             // 从可用节点转移到不可用节点
                             unavailableDataNodes.put(uniqueKey, availableDataNodes.remove(uniqueKey));
+                            unavailableDataNodes.get(uniqueKey).setStoredDataSize(0);
                             logger.debug("{} removed from available data node", toRemovedDataNode);
 
                             // 创建复制文件任务

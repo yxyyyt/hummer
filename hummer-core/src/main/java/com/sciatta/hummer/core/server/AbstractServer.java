@@ -7,6 +7,9 @@ import com.sciatta.hummer.core.fs.editlog.operation.impl.CreateFileOperation;
 import com.sciatta.hummer.core.fs.editlog.operation.impl.DummyOperation;
 import com.sciatta.hummer.core.fs.editlog.operation.impl.MkDirOperation;
 import com.sciatta.hummer.core.fs.editlog.operation.Operation;
+import com.sciatta.hummer.core.transport.command.Command;
+import com.sciatta.hummer.core.transport.command.impl.RemoveReplicaTaskCommand;
+import com.sciatta.hummer.core.transport.command.impl.ReplicateTaskCommand;
 import com.sciatta.hummer.core.util.GsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,9 +141,14 @@ public abstract class AbstractServer implements Server {
      */
     @SuppressWarnings("unchecked")
     private void registerGsonRuntimeType() {
-        GsonUtils.register(Operation.class, new Class[]{DummyOperation.class, MkDirOperation.class, CreateFileOperation.class});
+        GsonUtils.register(Operation.class,
+                new Class[]{DummyOperation.class, MkDirOperation.class, CreateFileOperation.class});
 
-        GsonUtils.register(INode.class, new Class[]{INodeFile.class, INodeDirectory.class});
+        GsonUtils.register(INode.class,
+                new Class[]{INodeFile.class, INodeDirectory.class});
+
+        GsonUtils.register(Command.class,
+                new Class[]{ReplicateTaskCommand.class, RemoveReplicaTaskCommand.class});
     }
 
     /**

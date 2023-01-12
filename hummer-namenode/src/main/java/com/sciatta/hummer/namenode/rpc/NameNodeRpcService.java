@@ -6,14 +6,16 @@ import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.fs.editlog.FlushedSegment;
 import com.sciatta.hummer.core.server.Server;
 import com.sciatta.hummer.core.transport.command.Command;
+import com.sciatta.hummer.core.transport.command.RemoteCommand;
 import com.sciatta.hummer.core.transport.command.impl.RemoveReplicaTaskCommand;
 import com.sciatta.hummer.core.transport.command.impl.ReplicateTaskCommand;
 import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
-import com.sciatta.hummer.namenode.fs.DataNodeManager;
+import com.sciatta.hummer.namenode.fs.data.DataNodeManager;
 import com.sciatta.hummer.namenode.fs.FSNameSystem;
-import com.sciatta.hummer.namenode.fs.ReplicateTask;
+import com.sciatta.hummer.namenode.fs.data.RemoveReplicaTask;
+import com.sciatta.hummer.namenode.fs.data.ReplicateTask;
 import com.sciatta.hummer.rpc.*;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
@@ -92,10 +94,10 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             return;
         }
 
-        List<Command> commands = new ArrayList<>();
+        RemoteCommand remoteCommand = new RemoteCommand();
         int status = dataNodeManager.heartbeat(request.getHostname(), request.getPort());
         if (status == TransportStatus.HeartBeat.NOT_REGISTERED) {
-            commands.add(new Command(TransportStatus.HeartBeat.CommandType.RE_REGISTER));
+            remoteCommand.addCommand(new Command(TransportStatus.HeartBeat.CommandType.RE_REGISTER));
         } else if (status == TransportStatus.HeartBeat.SUCCESS) {
 
             String uniqueKey = DataNodeInfo.uniqueKey(request.getHostname(), request.getPort());
@@ -104,35 +106,37 @@ public class NameNodeRpcService extends NameNodeServiceGrpc.NameNodeServiceImplB
             Set<ReplicateTask> replicateTasks = this.dataNodeManager.getDataNodeToReplicateTasks().get(uniqueKey);
             if (replicateTasks != null && replicateTasks.size() > 0) {
                 for (ReplicateTask replicateTask : replicateTasks) {
-                    commands.add(new ReplicateTaskCommand(
+                    remoteCommand.addCommand(new ReplicateTaskCommand(
                             TransportStatus.HeartBeat.CommandType.REPLICATE,
                             replicateTask.getFileName(),
                             replicateTask.getSource().getHostname(),
                             replicateTask.getSource().getPort()
                     ));
                 }
+                replicateTasks.clear();
             }
 
             // 副本删除任务
-            Set<String> removeReplicaTasks = this.dataNodeManager.getDataNodeToRemoveReplicaTasks().get(uniqueKey);
+            Set<RemoveReplicaTask> removeReplicaTasks = this.dataNodeManager.getDataNodeToRemoveReplicaTasks().get(uniqueKey);
             if (removeReplicaTasks != null && removeReplicaTasks.size() > 0) {
-                for (String removeReplicaTask : removeReplicaTasks) {
-                    commands.add(new RemoveReplicaTaskCommand(
+                for (RemoveReplicaTask removeReplicaTask : removeReplicaTasks) {
+                    remoteCommand.addCommand(new RemoveReplicaTaskCommand(
                             TransportStatus.HeartBeat.CommandType.REMOVE_REPLICA,
-                            removeReplicaTask
+                            removeReplicaTask.getFileName()
                     ));
                 }
+                removeReplicaTasks.clear();
             }
         }
 
         response = HeartbeatResponse.newBuilder()
                 .setStatus(status)
-                .setRemoteCommands(GsonUtils.toJson(commands)).build();
+                .setRemoteCommand(GsonUtils.toJson(remoteCommand)).build();
 
         logger.debug("data node {}:{} heartbeat finish, response remote commands {}, status {}",
                 request.getHostname(),
                 request.getPort(),
-                commands,
+                remoteCommand,
                 status);
 
         responseObserver.onNext(response);

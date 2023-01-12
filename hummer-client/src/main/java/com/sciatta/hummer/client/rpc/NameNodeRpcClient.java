@@ -8,6 +8,7 @@ import com.sciatta.hummer.core.fs.editlog.EditLog;
 import com.sciatta.hummer.core.server.Holder;
 import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.transport.command.Command;
+import com.sciatta.hummer.core.transport.command.RemoteCommand;
 import com.sciatta.hummer.core.util.GsonUtils;
 import com.sciatta.hummer.rpc.*;
 import io.grpc.ManagedChannel;
@@ -83,14 +84,10 @@ public class NameNodeRpcClient {
 
             HeartbeatResponse response = nameNodeServiceGrpc.heartbeat(request);
 
-            List<Command> commands = new ArrayList<>(
-                    GsonUtils.fromJson(response.getRemoteCommands(), new TypeToken<List<Command>>() {
-                    }.getType()));
+            logger.debug("data node {}:{} heartbeat to name node, response status is {}, remote command is {}",
+                    dataNodeHostname, dataNodePort, response.getStatus(), response.getRemoteCommand());
 
-            logger.debug("data node {}:{} heartbeat to name node, response status is {}, remote commands is {}",
-                    dataNodeHostname, dataNodePort, response.getStatus(), commands);
-
-            holder.set(commands);
+            holder.set(GsonUtils.fromJson(response.getRemoteCommand(), RemoteCommand.class).getCommands());
 
             return response.getStatus();
         } catch (Throwable e) {

@@ -1,4 +1,4 @@
-package com.sciatta.hummer.namenode.fs;
+package com.sciatta.hummer.namenode.fs.data;
 
 import com.sciatta.hummer.core.fs.data.DataNodeInfo;
 import com.sciatta.hummer.namenode.config.NameNodeConfig;
@@ -89,8 +89,11 @@ public class DataNodeAllocator {
 
         // 随机获取文件所在的数据节点
         int index = random.nextInt(helpDataNodeInfos.size());
+        DataNodeInfo source = (DataNodeInfo) helpDataNodeInfos.toArray()[index];
 
-        return (DataNodeInfo) dataNodeInfos.toArray()[index];
+        logger.debug("{} has data nodes {}, unavailable data node {}, allocator source {}",
+                fileName, dataNodeInfos, unavailableDataNode, source);
+        return source;
     }
 
     /**
@@ -101,25 +104,34 @@ public class DataNodeAllocator {
      */
     public DataNodeInfo allocatorReplicateDestination(String fileName) {
         Set<DataNodeInfo> dataNodeInfos = this.dataNodeManager.getFileNameToDataNodeCache().get(fileName);
-        if (dataNodeInfos == null || dataNodeInfos.size() == 0) {
-            return null;
+        DataNodeInfo destination = null;
+
+        try {
+            if (dataNodeInfos == null || dataNodeInfos.size() == 0) {
+                return null;
+            }
+
+            List<DataNodeInfo> helpDataNodeInfos = new ArrayList<>(this.dataNodeManager.getAvailableDataNodes().values());
+            helpDataNodeInfos.removeAll(dataNodeInfos);
+
+            if (helpDataNodeInfos.size() <= 0) {
+                return null;
+            }
+
+            if (helpDataNodeInfos.size() == 1) {
+                destination = helpDataNodeInfos.get(0);
+                return destination;
+            }
+
+            // 按数据节点当前存储数据的大小排序，优先选择存储数据小的节点，使得数据文件分布均匀的存储在各个数据节点上
+            helpDataNodeInfos.sort((d1, d2) -> (int) (d1.getStoredDataSize() - d2.getStoredDataSize()));
+
+            destination = helpDataNodeInfos.get(0);
+            return destination;
+        } finally {
+            logger.debug("{} has data nodes {}, allocator destination {}",
+                    fileName, dataNodeInfos, destination);
         }
-
-        List<DataNodeInfo> helpDataNodeInfos = new ArrayList<>(this.dataNodeManager.getAvailableDataNodes().values());
-        helpDataNodeInfos.removeAll(dataNodeInfos);
-
-        if (helpDataNodeInfos.size() <= 0) {
-            return null;
-        }
-
-        if (helpDataNodeInfos.size() == 1) {
-            return helpDataNodeInfos.get(0);
-        }
-
-        // 按数据节点当前存储数据的大小排序，优先选择存储数据小的节点，使得数据文件分布均匀的存储在各个数据节点上
-        helpDataNodeInfos.sort((d1, d2) -> (int) (d1.getStoredDataSize() - d2.getStoredDataSize()));
-
-        return helpDataNodeInfos.get(0);
 
     }
 }

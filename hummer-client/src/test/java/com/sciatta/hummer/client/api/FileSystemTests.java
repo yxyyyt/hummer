@@ -1,7 +1,7 @@
-package com.sciatta.hummer.client;
+package com.sciatta.hummer.client.api;
 
-import com.sciatta.hummer.client.fs.FileSystem;
-import com.sciatta.hummer.client.fs.FileSystemImpl;
+import com.sciatta.hummer.client.api.FileSystem;
+import com.sciatta.hummer.client.api.impl.FileSystemImpl;
 import com.sciatta.hummer.core.transport.TransportStatus;
 import com.sciatta.hummer.core.util.PathUtils;
 import org.junit.Test;

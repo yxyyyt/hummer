@@ -1,4 +1,4 @@
-package com.sciatta.hummer.client;
+package com.sciatta.hummer.client.rpc;
 
 import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.core.fs.data.DataNodeInfo;

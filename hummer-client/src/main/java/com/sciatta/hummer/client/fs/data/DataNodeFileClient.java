@@ -1,4 +1,4 @@
-package com.sciatta.hummer.client.fs;
+package com.sciatta.hummer.client.fs.data;
 
 import com.sciatta.hummer.core.transport.RequestType;
 import org.slf4j.Logger;

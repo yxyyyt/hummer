@@ -1,5 +1,7 @@
-package com.sciatta.hummer.client.fs;
+package com.sciatta.hummer.client.api.impl;
 
+import com.sciatta.hummer.client.api.FileSystem;
+import com.sciatta.hummer.client.fs.data.DataNodeFileClient;
 import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.core.fs.data.DataNodeInfo;
 import com.sciatta.hummer.core.server.Holder;

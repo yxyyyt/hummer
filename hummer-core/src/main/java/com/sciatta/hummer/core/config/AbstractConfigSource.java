@@ -1,5 +1,7 @@
 package com.sciatta.hummer.core.config;
 
+import com.sciatta.hummer.core.server.Holder;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -137,36 +139,17 @@ public abstract class AbstractConfigSource implements ConfigSource {
      * @return 参数值
      */
     private Object getConfigValue(String configName) {
-        Holder<Object> holder = configCache.getOrDefault(configName, new Holder<>(null));
+        Holder<Object> holder = configCache.getOrDefault(configName, new Holder<>());
 
-        if (holder.getValue() == null) {
+        if (holder.get() == null) {
             synchronized (holder) {
-                if (holder.getValue() == null) {
+                if (holder.get() == null) {
                     Object v = loadConfig(configName);
-                    holder.setValue(v);
+                    holder.set(v);
                 }
             }
         }
 
-        return holder.getValue();
-    }
-
-    /**
-     * 参数值持有器，方便同步
-     */
-    protected static class Holder<T> {
-        private volatile T value;
-
-        public Holder(T value) {
-            this.value = value;
-        }
-
-        public T getValue() {
-            return value;
-        }
-
-        public void setValue(T value) {
-            this.value = value;
-        }
+        return holder.get();
     }
 }

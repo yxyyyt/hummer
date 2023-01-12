@@ -2,6 +2,7 @@ package com.sciatta.hummer.core.config.impl;
 
 import com.sciatta.hummer.core.config.AbstractConfigSource;
 import com.sciatta.hummer.core.config.ConfigSource;
+import com.sciatta.hummer.core.server.Holder;
 import com.sciatta.hummer.core.util.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

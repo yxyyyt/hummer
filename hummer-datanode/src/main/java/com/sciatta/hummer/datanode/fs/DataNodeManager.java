@@ -1,6 +1,6 @@
 package com.sciatta.hummer.datanode.fs;
 
-import com.sciatta.hummer.client.fs.DataNodeFileClient;
+import com.sciatta.hummer.client.fs.data.DataNodeFileClient;
 import com.sciatta.hummer.client.rpc.NameNodeRpcClient;
 import com.sciatta.hummer.core.fs.data.StorageInfo;
 import com.sciatta.hummer.core.server.Holder;
